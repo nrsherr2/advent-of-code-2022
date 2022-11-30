@@ -4,7 +4,7 @@ import kotlin.math.abs
 /**
  * Reads lines from the given input txt file.
  */
-fun readInput(name: String) = File("src/resources", "$name.txt").readLines()
+fun readInput(name: String) = File("src/main/resources", "$name.txt").readLines()
 fun assertEquals(expected: Any?, condition: Any?, part: Int? = null) {
     require(condition == expected) { "Test Failed! Expected $expected, Received $condition ${if (part == null) "" else "on part $part"}" }
 }
