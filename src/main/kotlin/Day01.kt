@@ -37,17 +37,7 @@ class Day01 {
     }
 
     fun part2(input: List<String>): Long {
-        val resuts = mutableListOf<Long>()
-        var acc: Long = 0
-        input.forEach {
-            if (it.isBlank()) {
-                resuts.add(acc)
-                acc = 0
-            } else {
-                acc += it.toLong()
-            }
-        }
-        resuts.add(acc)
+        val resuts = input.joinToString("\n").split("\n\n").map { grp -> grp.split("\n").sumOf { it.toLong() } }
         return resuts.sortedDescending().take(3).sum()
     }
 }
