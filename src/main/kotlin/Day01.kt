@@ -31,7 +31,6 @@ class Day01 {
             }
         }
         resuts.add(acc)
-        val sorted = resuts.sortedDescending()
-        return sorted.take(3).sum()
+        return resuts.sortedDescending().take(3).sum()
     }
 }
