@@ -1,4 +1,6 @@
 class Day19 {
+    val part1TestExpected = -1
+    val part2TestExpected = -1
     fun part1(input: List<String>): Int {
         TODO()
     }
