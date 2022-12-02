@@ -1,8 +1,8 @@
 import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) {
-    val dayNum = 1.toString().padStart(2, '0')
-    val day = Day01()
+    val dayNum = 2.toString().padStart(2, '0')
+    val day = Day02()
     val part1Only = false
     val includeTesting = true
 
