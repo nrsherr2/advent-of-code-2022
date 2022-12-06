@@ -4,7 +4,7 @@ class Day05 {
     fun part1(input: List<String>): String {
         val (crates, instructions) = parse(input)
         instructions.forEach { instruction ->
-            (1..instruction.numToMove).onEach {
+            (1..instruction.numToMove).forEach {
                 crates[instruction.dest - 1].addFirst(crates[instruction.src - 1].removeFirst())
             }
         }
@@ -16,7 +16,6 @@ class Day05 {
         val crane = ArrayDeque<Char>()
         instructions.forEach { instruction ->
             (1..instruction.numToMove).onEach {
-//                crates[instruction.dest - 1].addFirst(crates[instruction.src - 1].removeFirst())
                 crane.addFirst(crates[instruction.src - 1].removeFirst())
             }.forEach {
                 crates[instruction.dest - 1].addFirst(crane.removeFirst())
