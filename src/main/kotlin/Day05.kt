@@ -21,7 +21,7 @@ class Day05 {
                 crates[instruction.dest - 1].addFirst(crane.removeFirst())
             }
         }
-        return crates.map { it.first() }.joinToString("")
+        return crates.joinToString("") { it.first().toString() }
     }
 
     private fun parse(input: List<String>): ParsedInput {
