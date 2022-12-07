@@ -10,11 +10,12 @@ class Day07 {
         val currentTree = parseInput(input)
         val desiredSize = 70000000 - 30000000
         val initialSize = currentTree.head.size
-        val canDelete = mutableListOf<FileTreeFolder>()
-        var layer = listOf(currentTree.head)
-        while (layer.isNotEmpty()) {
-            canDelete.addAll(layer.filter { initialSize - it.size <= desiredSize })
-            layer = layer.flatMap { it.children.filterIsInstance<FileTreeFolder>() }
+        val canDelete = buildList {
+            var layer = listOf(currentTree.head)
+            while (layer.isNotEmpty()) {
+                addAll(layer.filter { initialSize - it.size <= desiredSize })
+                layer = layer.flatMap { it.children.filterIsInstance<FileTreeFolder>() }
+            }
         }
         return canDelete.minOf { it.size }
     }
@@ -28,51 +29,32 @@ class Day07 {
     private fun parseInput(input: List<String>): FileTree {
         val tree = FileTree()
         var currentNode: FileTreeFolder = tree.head
-        var currentState = TerminalState.INPUT
-        try {
 
-            fun inputAction(
-                line: String,
-                spl: List<String>
-            ) {
-                when (line) {
-                    "$ ls" -> currentState = TerminalState.OUTPUT
-                    "$ cd /" -> currentNode = tree.head
-                    "$ cd .." -> currentNode = currentNode.parent!!
-                    else -> {
-                        val name = spl.last()
-                        currentNode = currentNode.children.first { it.name == name } as FileTreeFolder
+        input.forEach { line ->
+            val spl = line.split(" ")
+            when (spl.first()) {
+                "dir" -> {
+                    val nnn = FileTreeFolder(spl.last(), currentNode)
+                    currentNode.children.add(nnn)
+                }
+
+                "$" -> {
+                    when (line) {
+                        "$ ls" -> {}
+                        "$ cd /" -> currentNode = tree.head
+                        "$ cd .." -> currentNode = currentNode.parent!!
+                        else -> {
+                            val name = spl.last()
+                            currentNode = currentNode.children.first { it.name == name } as FileTreeFolder
+                        }
                     }
                 }
+
+                else -> currentNode.children.add(FileTreeFile(spl.last(), spl.first().toInt()))
             }
-
-            input.forEach { line ->
-                val spl = line.split(" ")
-                when (currentState) {
-                    TerminalState.INPUT -> inputAction(line, spl)
-
-                    TerminalState.OUTPUT -> when (spl.first()) {
-                        "dir" -> {
-                            val nnn = FileTreeFolder(spl.last(), currentNode)
-                            currentNode.children.add(nnn)
-                        }
-
-                        "$" -> {
-                            currentState = TerminalState.INPUT
-                            inputAction(line, spl)
-                        }
-
-                        else -> currentNode.children.add(FileTreeFile(spl.last(), spl.first().toInt()))
-                    }
-                }
-            }
-            return tree
-        } catch (e: Exception) {
-            println(tree)
-            println(currentNode)
-            println(currentState)
-            throw e
         }
+        return tree
+
     }
 
 
