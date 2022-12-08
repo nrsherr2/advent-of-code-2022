@@ -22,11 +22,11 @@ class Day08 {
         val b = parsed.flatMapIndexed { rowNum, line ->
             line.mapIndexed { colNum, height ->
                 val col = parsed.map { it[colNum] }
-                //I got 120. Passed test, did not pass solution. Check it out.
-                scoreLess(line, colNum, height) +
-                        scoreMore(line, colNum, height) +
-                        scoreLess(col, rowNum, height) +
-                        scoreMore(col, rowNum, height)
+                val left = scoreLess(line, colNum, height)
+                val right = scoreMore(line, colNum, height)
+                val up = scoreLess(col, rowNum, height)
+                val down = scoreMore(col, rowNum, height)
+                left * right * up * down
             }
         }
         return b.maxOf { it }
@@ -43,6 +43,6 @@ class Day08 {
         if (colNum == line.lastIndex) return 0
         val myList = line.subList(colNum + 1, line.size)
         val idx = myList.indexOfFirst { it >= height }
-        return if (idx == -1) line.lastIndex - colNum else idx - colNum
+        return if (idx == -1) line.lastIndex - colNum else idx + 1
     }
 }
