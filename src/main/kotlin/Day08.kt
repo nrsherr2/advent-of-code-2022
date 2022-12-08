@@ -19,9 +19,10 @@ class Day08 {
 
     fun part2(input: List<String>): Int {
         val parsed = input.map { line -> line.map { it.digitToInt() } }
+        val cols = parsed.indices.map { idx -> parsed.map { it[idx] } }
         val b = parsed.flatMapIndexed { rowNum, line ->
             line.mapIndexed { colNum, height ->
-                val col = parsed.map { it[colNum] }
+                val col = cols[colNum]
                 val left = scoreLess(line, colNum, height)
                 val right = scoreMore(line, colNum, height)
                 val up = scoreLess(col, rowNum, height)
