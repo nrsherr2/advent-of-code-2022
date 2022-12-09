@@ -16,6 +16,10 @@ data class Point(var rowNum: Int, var colNum: Int) {
     val x = colNum
 }
 
+operator fun Point.plus(other: Point): Point {
+    return Point(this.rowNum + other.rowNum, this.colNum + other.colNum)
+}
+
 data class Point3D(var rowNum: Int, var colNum: Int, var spaceNum: Int) {
     val x = colNum
     val y = rowNum

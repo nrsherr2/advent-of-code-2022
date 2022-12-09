@@ -79,22 +79,19 @@ class Day09 {
 
         fun moveIf(newPoint: Point) {
             val neighbors = (-1..1).flatMap { l -> (-1..1).map { r -> l to r } }
-                .map { a -> Point(location.rowNum + a.first, location.colNum + a.second) }
+                .map { a -> location + Point(a.first, a.second) }
             if (newPoint in neighbors) return
-            val movePoint =
-                listOf(
-                    Point(-2, 0),
-                    Point(2, 0),
-                    Point(0, -2),
-                    Point(0, 2)
-                ).firstOrNull { newPoint == Point(it.rowNum + location.rowNum, it.colNum + location.colNum) }
-                    ?.let { Point(location.rowNum + (it.rowNum / 2), location.colNum + (it.colNum / 2)) }
-                    ?: Point(
-                        location.rowNum + if (newPoint.rowNum > location.rowNum) 1 else -1,
-                        location.colNum + if (newPoint.colNum > location.colNum) 1 else -1
-                    )
-            val older = location.copy()
-            prevPoints.add(older)
+            val movePoint = location + (listOf(
+                Point(-2, 0),
+                Point(2, 0),
+                Point(0, -2),
+                Point(0, 2)
+            ).firstOrNull { newPoint == location + it }?.let { Point(it.rowNum / 2, it.colNum / 2) }
+                ?: Point(
+                    if (newPoint.rowNum > location.rowNum) 1 else -1,
+                    if (newPoint.colNum > location.colNum) 1 else -1
+                ))
+            prevPoints.add(location.copy())
             location = movePoint
             follower?.moveIf(movePoint)
         }
