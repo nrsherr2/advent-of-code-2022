@@ -1,9 +1,10 @@
 import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) {
-    val dayNum = 8.toString().padStart(2, '0')
-    val day = Day08()
+    val dayNum = 9.toString().padStart(2, '0')
+    val day = Day09()
     val part1Only = false
+    val part2HasDifferentInput = true
     val includeTesting = true
 
     if (includeTesting) {
@@ -11,7 +12,8 @@ fun main(args: Array<String>) {
         val part1TestOutput = day.part1(testInput)
         assertEquals(day.part1TestExpected, part1TestOutput, 1)
         if (!part1Only) {
-            val part2TestOutput = day.part2(testInput)
+            val testInput2 = if (part2HasDifferentInput) readInput("Day${dayNum}_Test2") else testInput
+            val part2TestOutput = day.part2(testInput2)
             assertEquals(day.part2TestExpected, part2TestOutput, 2)
         }
     }

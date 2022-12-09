@@ -1,11 +1,102 @@
 class Day09 {
-    val part1TestExpected = -1
-    val part2TestExpected = -1
+    val part1TestExpected = 13
+    val part2TestExpected = 36
     fun part1(input: List<String>): Int {
-        TODO()
+        val head = Head()
+        input.forEach { line ->
+            val dir = line.first()
+            (1..line.split(" ")[1].toInt()).forEach {
+                head.move(dir)
+            }
+        }
+//        head.visualize()
+        return (head.follower.getLowestHistory() + head.follower.getDownPoints().first()).distinct().size
     }
 
     fun part2(input: List<String>): Int {
-        TODO()
+        val head = Head(true)
+        input.forEach { line ->
+            val dir = line.first()
+            (1..line.split(" ")[1].toInt()).forEach {
+                head.move(dir)
+            }
+        }
+//        head.visualize()
+        return (head.follower.getLowestHistory().distinct() + head.follower.getDownPoints().last()).size
+    }
+
+    class Head(multipleFollowers: Boolean = false) {
+        private var location: Point = Point(0, 0)
+        private val maxFollowerLayer = 9
+        val follower = if (multipleFollowers) Tail(true, maxFollowerLayer) else Tail()
+
+        fun move(direction: Char) {
+//            println("$direction")
+            val newPoint = when (direction) {
+                'U' -> Point(location.rowNum + 1, location.colNum)
+                'D' -> Point(location.rowNum - 1, location.colNum)
+                'R' -> Point(location.rowNum, location.colNum + 1)
+                'L' -> Point(location.rowNum, location.colNum - 1)
+                else -> TODO()
+            }
+            location = newPoint
+            follower.moveIf(newPoint)
+        }
+
+
+        fun visualize() {
+            val lh = follower.getLowestHistory()
+            val dp = follower.getDownPoints()
+            val locations = dp + location + follower.getLowestHistory()
+            println("***")
+            for (i in locations.minOf { it.rowNum }..locations.maxOf { it.rowNum }) {
+                for (j in locations.minOf { it.colNum }..locations.maxOf { it.colNum }) {
+                    val char = when (Point(i, j)) {
+                        location -> 'H'
+                        in dp -> (dp.indexOf(Point(i, j)) + 1)
+                        in lh -> '#'
+                        else -> '.'
+                    }
+                    print("$char ")
+                }
+                println()
+            }
+        }
+
+    }
+
+    class Tail(hasFollower: Boolean = false, maxFollowerLayer: Int = -1, followerLayer: Int = 1) {
+        var location: Point = Point(0, 0)
+        val prevPoints = mutableListOf<Point>()
+        private var follower: Tail? = if (!hasFollower || followerLayer == maxFollowerLayer) null
+        else Tail(true, maxFollowerLayer, followerLayer + 1)
+
+        fun getLowestHistory(): List<Point> = (follower?.getLowestHistory()) ?: prevPoints
+
+        fun getDownPoints(): List<Point> {
+            return emptyList<Point>() + location + (follower?.getDownPoints() ?: emptyList())
+        }
+
+        fun moveIf(newPoint: Point) {
+            val neighbors = (-1..1).flatMap { l -> (-1..1).map { r -> l to r } }
+                .map { a -> Point(location.rowNum + a.first, location.colNum + a.second) }
+            if (newPoint in neighbors) return
+            val movePoint =
+                listOf(
+                    Point(-2, 0),
+                    Point(2, 0),
+                    Point(0, -2),
+                    Point(0, 2)
+                ).firstOrNull { newPoint == Point(it.rowNum + location.rowNum, it.colNum + location.colNum) }
+                    ?.let { Point(location.rowNum + (it.rowNum / 2), location.colNum + (it.colNum / 2)) }
+                    ?: Point(
+                        location.rowNum + if (newPoint.rowNum > location.rowNum) 1 else -1,
+                        location.colNum + if (newPoint.colNum > location.colNum) 1 else -1
+                    )
+            val older = location.copy()
+            prevPoints.add(older)
+            location = movePoint
+            follower?.moveIf(movePoint)
+        }
     }
 }
