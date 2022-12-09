@@ -10,7 +10,7 @@ class Day09 {
             }
         }
 //        head.visualize()
-        return (head.follower.getLowestHistory() + head.follower.getDownPoints().first()).distinct().size
+        return (head.follower.getLowestHistory() + head.follower.getDownPoints().first()).size
     }
 
     fun part2(input: List<String>): Int {
@@ -22,7 +22,7 @@ class Day09 {
             }
         }
 //        head.visualize()
-        return (head.follower.getLowestHistory().distinct() + head.follower.getDownPoints().last()).size
+        return (head.follower.getLowestHistory() + head.follower.getDownPoints().last()).size
     }
 
     class Head(multipleFollowers: Boolean = false) {
@@ -67,14 +67,14 @@ class Day09 {
 
     class Tail(hasFollower: Boolean = false, maxFollowerLayer: Int = -1, followerLayer: Int = 1) {
         var location: Point = Point(0, 0)
-        val prevPoints = mutableListOf<Point>()
+        val prevPoints = mutableSetOf<Point>()
         private var follower: Tail? = if (!hasFollower || followerLayer == maxFollowerLayer) null
         else Tail(true, maxFollowerLayer, followerLayer + 1)
 
-        fun getLowestHistory(): List<Point> = (follower?.getLowestHistory()) ?: prevPoints
+        fun getLowestHistory(): Set<Point> = (follower?.getLowestHistory()) ?: prevPoints
 
-        fun getDownPoints(): List<Point> {
-            return emptyList<Point>() + location + (follower?.getDownPoints() ?: emptyList())
+        fun getDownPoints(): Set<Point> {
+            return emptySet<Point>() + location + (follower?.getDownPoints() ?: emptyList())
         }
 
         fun moveIf(newPoint: Point) {
