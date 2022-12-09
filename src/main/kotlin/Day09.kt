@@ -82,11 +82,11 @@ class Day09 {
                 .map { a -> location + Point(a.first, a.second) }
             if (newPoint in neighbors) return
             val movePoint = location + (listOf(
-                Point(-2, 0),
-                Point(2, 0),
-                Point(0, -2),
-                Point(0, 2)
-            ).firstOrNull { newPoint == location + it }?.let { Point(it.rowNum / 2, it.colNum / 2) }
+                Point(-1, 0),
+                Point(1, 0),
+                Point(0, -1),
+                Point(0, 1)
+            ).firstOrNull { newPoint == location + (it * 2) }
                 ?: Point(
                     if (newPoint.rowNum > location.rowNum) 1 else -1,
                     if (newPoint.colNum > location.colNum) 1 else -1

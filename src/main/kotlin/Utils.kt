@@ -14,10 +14,9 @@ fun String.toSortedString() = toCharArray().sorted().joinToString("")
 data class Point(var rowNum: Int, var colNum: Int) {
     val y = rowNum
     val x = colNum
-}
+    operator fun plus(other: Point): Point = Point(this.rowNum + other.rowNum, this.colNum + other.colNum)
 
-operator fun Point.plus(other: Point): Point {
-    return Point(this.rowNum + other.rowNum, this.colNum + other.colNum)
+    operator fun times(projector: Int) = Point(rowNum * projector, colNum * projector)
 }
 
 data class Point3D(var rowNum: Int, var colNum: Int, var spaceNum: Int) {
