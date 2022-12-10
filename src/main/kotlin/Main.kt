@@ -1,10 +1,10 @@
 import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) {
-    val dayNum = 9.toString().padStart(2, '0')
-    val day = Day09()
+    val dayNum = 10.toString().padStart(2, '0')
+    val day = Day10()
     val part1Only = false
-    val part2HasDifferentInput = true
+    val part2HasDifferentInput = false
     val includeTesting = true
 
     if (includeTesting) {
@@ -24,12 +24,12 @@ fun main(args: Array<String>) {
         val part2Output = if (part1Only) null else day.part2(actualInput)
         println(
             """
-                *** PART 1 ***
-                $part1Output
-                *** PART 2 ***
-                $part2Output
-                ***  END  ***
-            """.trimIndent()
+                |*** PART 1 ***
+                |$part1Output
+                |*** PART 2 ***
+                |$part2Output
+                |***  END  ***
+            """.trimMargin()
         )
     }
     println("Processing time: ${timeToExecute}ms")
