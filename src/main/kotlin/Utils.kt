@@ -53,7 +53,20 @@ data class Neighbors<T>(
     val botLeft: T?,
     val botMid: T?,
     val botRight: T?
-)
+) {
+    fun toList(includeObj: Boolean = false) = listOfNotNull(
+        topLeft,
+        topMid,
+        topRight,
+        midLeft,
+        midRight,
+        botLeft,
+        botMid,
+        botRight,
+        theObj?.takeIf { includeObj })
+
+    fun orthogonalList() = listOfNotNull(topMid, midLeft, midRight, botMid)
+}
 
 fun <T> List<List<T>>.neighborsOf(point: Point) = Neighbors(
     access(point.copy(rowNum = point.rowNum - 1, colNum = point.colNum - 1)),
@@ -67,20 +80,38 @@ fun <T> List<List<T>>.neighborsOf(point: Point) = Neighbors(
     access(point.copy(rowNum = point.rowNum + 1, colNum = point.colNum + 1)),
 )
 
-data class Node(val costToEnter: Int, val identifier: String? = null, var neighbors: Set<Node> = emptySet())
+class Node<T>(val costToEnter: Int, val identifier: T? = null, var neighbors: Set<Node<T>> = emptySet()) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
 
-data class DijkstraResults(
-    val grid: Set<Node>,
-    val source: Node,
-    val end: Node,
-    val distanceFromSource: Map<Node, Int>,
-    val branchMap: Map<Node, Node?>
+        other as Node<*>
+
+        if (costToEnter != other.costToEnter) return false
+        if (identifier != other.identifier) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = costToEnter
+        result = 31 * result + (identifier?.hashCode() ?: 0)
+        return result
+    }
+}
+
+data class DijkstraResults<T>(
+    val grid: Set<Node<T>>,
+    val source: Node<T>,
+    val end: Node<T>,
+    val distanceFromSource: Map<Node<T>, Int>,
+    val branchMap: Map<Node<T>, Node<T>?>
 )
 
-fun dijkstra(grid: Set<Node>, source: Node, end: Node): DijkstraResults {
-    val unusedNodes = mutableSetOf<Node>()
-    val dist = mutableMapOf<Node, Int>()
-    val hops = mutableMapOf<Node, Node?>()
+fun <T> dijkstra(grid: Set<Node<T>>, source: Node<T>, end: Node<T>): DijkstraResults<T> {
+    val unusedNodes = mutableSetOf<Node<T>>()
+    val dist = mutableMapOf<Node<T>, Int>()
+    val hops = mutableMapOf<Node<T>, Node<T>?>()
     grid.forEach { n ->
         dist[n] = Int.MAX_VALUE
         hops[n] = null
@@ -89,7 +120,7 @@ fun dijkstra(grid: Set<Node>, source: Node, end: Node): DijkstraResults {
     dist[source] = 0
 
     while (unusedNodes.isNotEmpty()) {
-        if (unusedNodes.size % 10 == 0) println(unusedNodes.size)
+//        if (unusedNodes.size % 10 == 0) println(unusedNodes.size)
         val minDist = dist.filter { it.key in unusedNodes }.minByOrNull { it.value }!!.key
         unusedNodes.remove(minDist)
         val unusedNeighbors = minDist.neighbors.filter { it in unusedNodes }
