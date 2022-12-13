@@ -32,11 +32,11 @@ class Day09 {
 
         fun move(direction: Char) {
 //            println("$direction")
-            val newPoint = when (direction) {
-                'U' -> Point(location.rowNum + 1, location.colNum)
-                'D' -> Point(location.rowNum - 1, location.colNum)
-                'R' -> Point(location.rowNum, location.colNum + 1)
-                'L' -> Point(location.rowNum, location.colNum - 1)
+            val newPoint = location + when (direction) {
+                'U' -> Point(1, 0)
+                'D' -> Point(-1, 0)
+                'R' -> Point(0, 1)
+                'L' -> Point(0, -1)
                 else -> TODO()
             }
             location = newPoint
