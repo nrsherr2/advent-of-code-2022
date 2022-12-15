@@ -54,7 +54,7 @@ class Day14 {
     }
 
     private fun parseInput(input: List<String>): Set<Point> {
-        val points = buildSet {
+        return buildSet {
             input.forEach { segmentedLine ->
                 val seggs =
                     segmentedLine.split(" -> ")
@@ -68,7 +68,6 @@ class Day14 {
                 }
             }
         }
-        return points
     }
 
     private fun visualize(walls: Set<Point>, sands: Set<Point>) {
