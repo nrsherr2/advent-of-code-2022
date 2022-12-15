@@ -1,6 +1,7 @@
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.random.Random
 import kotlin.system.measureTimeMillis
 
 class Day15 {
@@ -15,7 +16,7 @@ class Day15 {
             if (numToLookFor in range) PointTriple(it.key, mhd)
             else null
         }
-        println("mapSize: ${map.size}\t filteredSize: ${filtered.size}")
+//        println("mapSize: ${map.size}\t filteredSize: ${filtered.size}")
         return (filtered.minOf { it.sensor.colNum - it.manhattan }..filtered.maxOf { it.sensor.colNum + it.manhattan }).count { colNum ->
             val point = Point(numToLookFor, colNum)
             if (point in map.values) false
@@ -24,6 +25,16 @@ class Day15 {
     }
 
     fun part2(input: List<String>): Long {
+        val int = Random.nextInt(1, 4)
+        println("using solution $int")
+        return when (int) {
+            1 -> part2Sol1(input)
+            2 -> part2Sol2(input)
+            else -> part2Sol3(input)
+        }
+    }
+
+    fun part2Sol3(input: List<String>): Long {
         val map = parseInput(input).map { PointTriple(it.key, manhattanDistance(it.key, it.value)) }
         val numToLookFor = if (map.size < 20) 20 else 4000000
         val (posSlopes, negSlopes) = map.flatMap { it.slopes() }.partition { it.direction == 1 }
@@ -31,11 +42,11 @@ class Day15 {
             negSlopes.forEach { ns ->
                 val colNum = (ns.offset - ps.offset) / 2
                 val rowNum = colNum + ps.offset
-                println("x + ${ps.offset} = -x + ${ns.offset} | 2x = ${ns.offset} - ${ps.offset} | x = $colNum | y = $rowNum")
+//                println("x + ${ps.offset} = -x + ${ns.offset} | 2x = ${ns.offset} - ${ps.offset} | x = $colNum | y = $rowNum")
                 if (colNum in 0..numToLookFor && rowNum in 0..numToLookFor) {
-                    println("potential ($colNum,$rowNum)")
+//                    println("potential ($colNum,$rowNum)")
                     if (Point(rowNum, colNum).let { p -> map.all { manhattanDistance(p, it.sensor) > it.manhattan } }) {
-                        println("FOUND ($colNum,$rowNum)")
+//                        println("FOUND ($colNum,$rowNum)")
                         return colNum * 4000000L + rowNum
                     }
                 }
@@ -44,7 +55,7 @@ class Day15 {
         return -1
     }
 
-    fun part2DepThird(input: List<String>): Int {
+    fun part2Sol2(input: List<String>): Long {
         val map = parseInput(input).map { PointTriple(it.key, manhattanDistance(it.key, it.value)) }
         val numToLookFor = if (map.size < 20) 20 else 4000000
         for (rowNum in 0..numToLookFor) measureTimeMillis {
@@ -53,8 +64,8 @@ class Day15 {
             while (colNum <= numToLookFor) {
                 val overlap = ranges.firstOrNull { colNum in it }
                 if (overlap == null) {
-                    println("($rowNum,$colNum)")
-                    return colNum * 4000000 + rowNum
+//                    println("($rowNum,$colNum)")
+                    return colNum * 4000000L + rowNum
                 } else {
                     colNum = overlap.last
                 }
@@ -64,36 +75,21 @@ class Day15 {
         return -1
     }
 
-    fun part2DepAgain(input: List<String>): Int {
+    fun part2Sol1(input: List<String>): Long {
         val map = parseInput(input).map { PointTriple(it.key, manhattanDistance(it.key, it.value)) }
         val numToLookFor = if (map.size < 20) 20 else 4000000
         val list = mutableSetOf<Point>()
         map.forEachIndexed { index, t ->
-            println("Processing aura $index")
+//            println("Processing aura $index")
             val points = t.menacingAura()
-            println("Matching against $t: ${points.size}")
+//            println("Matching against $t: ${points.size}")
             points.forEach { p ->
                 if (p.rowNum < 0 || p.colNum < 0 || p.rowNum > numToLookFor || p.colNum > numToLookFor) return@forEach
                 if (map.all { manhattanDistance(it.sensor, p) > it.manhattan }) list.add(p)
             }
         }
-        println(list)
-        return list.first().let { it.colNum * 4000000 + it.rowNum }
-    }
-
-    fun part2Dep(input: List<String>): Int {
-        val map = parseInput(input).map { PointTriple(it.key, manhattanDistance(it.key, it.value)) }
-        val numToLookFor = if (map.size < 20) 20 else 4000000
-        for (rowNum in 0..numToLookFor) measureTimeMillis {
-            val res = map.fold(emptyList<Int>()) { acc, pointTriple ->
-                acc + pointTriple.colRange(rowNum, numToLookFor)
-            }.distinct()
-            if (res.size != numToLookFor + 1) {
-                val x = (0..numToLookFor).first { it !in res }
-                return x * 4000000 + rowNum
-            }
-        }.let { println("It took $rowNum $it seconds to finish") }
-        return -1
+//        println(list)
+        return list.first().let { it.colNum * 4000000L + it.rowNum }
     }
 
     data class PointTriple(val sensor: Point, val manhattan: Int) {
@@ -106,7 +102,7 @@ class Day15 {
         }
 
         fun menacingAura() = buildList {
-            println(-(manhattan + 1)..(manhattan + 1))
+//            println(-(manhattan + 1)..(manhattan + 1))
             for (i in -(manhattan + 1)..(manhattan + 1)) {
                 val rowNum = sensor.rowNum + i
                 val colOffset = (manhattan + 1) - abs(i)
