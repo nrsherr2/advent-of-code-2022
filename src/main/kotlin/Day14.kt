@@ -54,22 +54,19 @@ class Day14 {
     }
 
     private fun parseInput(input: List<String>): Set<Point> {
-        val points = mutableSetOf<Point>()
-        input.forEach { segmentedLine ->
-            val bin = mutableSetOf<Point>()
-            val seggs =
-                segmentedLine.split(" -> ").map { pair -> pair.split(",").let { Point(it[1].toInt(), it[0].toInt()) } }
-            seggs.forEachIndexed { index, point ->
-                if (index == 0) bin.add(point)
-                else for (i in min(point.rowNum, seggs[index - 1].rowNum)..
-                        max(point.rowNum, seggs[index - 1].rowNum)) {
-                    for (j in min(point.colNum, seggs[index - 1].colNum)..
-                            max(point.colNum, seggs[index - 1].colNum)) {
-                        bin.add(Point(i, j))
+        val points = buildSet {
+            input.forEach { segmentedLine ->
+                val seggs =
+                    segmentedLine.split(" -> ")
+                        .map { pair -> pair.split(",").let { Point(it[1].toInt(), it[0].toInt()) } }
+                seggs.windowed(2, 1).forEach { (a, b) ->
+                    for (i in min(a.rowNum, b.rowNum)..max(a.rowNum, b.rowNum)) {
+                        for (j in min(a.colNum, b.colNum)..max(a.colNum, b.colNum)) {
+                            add(Point(i, j))
+                        }
                     }
                 }
             }
-            points.addAll(bin)
         }
         return points
     }
