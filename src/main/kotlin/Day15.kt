@@ -5,14 +5,14 @@ import kotlin.system.measureTimeMillis
 
 class Day15 {
     val part1TestExpected = 26
-    val part2TestExpected = 56000011
+    val part2TestExpected = 56000011L
     fun part1(input: List<String>): Int {
         val map = parseInput(input)
         val numToLookFor = if (map.size < 20) 10 else 2000000
         val filtered = map.mapNotNull {
             val mhd = manhattanDistance(it.key, it.value)
             val range = (it.key.rowNum - mhd)..(it.key.rowNum + mhd)
-            if (numToLookFor in range) PointTriple(it.key, it.value, mhd)
+            if (numToLookFor in range) PointTriple(it.key, mhd)
             else null
         }
         println("mapSize: ${map.size}\t filteredSize: ${filtered.size}")
@@ -23,8 +23,49 @@ class Day15 {
         }
     }
 
-    fun part2(input: List<String>): Int {
-        val map = parseInput(input).map { PointTriple(it.key, it.value, manhattanDistance(it.key, it.value)) }
+    fun part2(input: List<String>): Long {
+        val map = parseInput(input).map { PointTriple(it.key, manhattanDistance(it.key, it.value)) }
+        val numToLookFor = if (map.size < 20) 20 else 4000000
+        val (posSlopes, negSlopes) = map.flatMap { it.slopes() }.partition { it.direction == 1 }
+        posSlopes.forEach { ps ->
+            negSlopes.forEach { ns ->
+                val colNum = (ns.offset - ps.offset) / 2
+                val rowNum = colNum + ps.offset
+                println("x + ${ps.offset} = -x + ${ns.offset} | 2x = ${ns.offset} - ${ps.offset} | x = $colNum | y = $rowNum")
+                if (colNum in 0..numToLookFor && rowNum in 0..numToLookFor) {
+                    println("potential ($colNum,$rowNum)")
+                    if (Point(rowNum, colNum).let { p -> map.all { manhattanDistance(p, it.sensor) > it.manhattan } }) {
+                        println("FOUND ($colNum,$rowNum)")
+                        return colNum * 4000000L + rowNum
+                    }
+                }
+            }
+        }
+        return -1
+    }
+
+    fun part2DepThird(input: List<String>): Int {
+        val map = parseInput(input).map { PointTriple(it.key, manhattanDistance(it.key, it.value)) }
+        val numToLookFor = if (map.size < 20) 20 else 4000000
+        for (rowNum in 0..numToLookFor) measureTimeMillis {
+            var colNum = 0
+            val ranges = map.map { it.colRange(rowNum, numToLookFor) }
+            while (colNum <= numToLookFor) {
+                val overlap = ranges.firstOrNull { colNum in it }
+                if (overlap == null) {
+                    println("($rowNum,$colNum)")
+                    return colNum * 4000000 + rowNum
+                } else {
+                    colNum = overlap.last
+                }
+                colNum++
+            }
+        }
+        return -1
+    }
+
+    fun part2DepAgain(input: List<String>): Int {
+        val map = parseInput(input).map { PointTriple(it.key, manhattanDistance(it.key, it.value)) }
         val numToLookFor = if (map.size < 20) 20 else 4000000
         val list = mutableSetOf<Point>()
         map.forEachIndexed { index, t ->
@@ -41,7 +82,7 @@ class Day15 {
     }
 
     fun part2Dep(input: List<String>): Int {
-        val map = parseInput(input).map { PointTriple(it.key, it.value, manhattanDistance(it.key, it.value)) }
+        val map = parseInput(input).map { PointTriple(it.key, manhattanDistance(it.key, it.value)) }
         val numToLookFor = if (map.size < 20) 20 else 4000000
         for (rowNum in 0..numToLookFor) measureTimeMillis {
             val res = map.fold(emptyList<Int>()) { acc, pointTriple ->
@@ -55,7 +96,7 @@ class Day15 {
         return -1
     }
 
-    data class PointTriple(val sensor: Point, val beacon: Point, val manhattan: Int) {
+    data class PointTriple(val sensor: Point, val manhattan: Int) {
         fun colRange(rowNum: Int, numToLookFor: Int): IntRange {
             if (rowNum !in sensor.rowNum - manhattan..sensor.rowNum + manhattan) return IntRange.EMPTY
             val numOff = abs(rowNum - sensor.rowNum)
@@ -76,7 +117,17 @@ class Day15 {
             }
         }.distinct()
 
+        fun slopes(): List<Slope> {
+            //calc pos slopes
+            val upperPos = Slope(1, sensor.rowNum + manhattan + 1 - sensor.colNum)
+            val lowerPos = Slope(1, sensor.rowNum - manhattan - 1 - sensor.colNum)
+            val upperNeg = Slope(-1, sensor.rowNum + manhattan + 1 + sensor.colNum)
+            val lowerNeg = Slope(-1, sensor.rowNum - manhattan - 1 - sensor.colNum)
+            return listOf(upperPos, upperNeg, lowerNeg, lowerPos)
+        }
     }
+
+    class Slope(val direction: Int, val offset: Int)
 
     fun visualize(map: Map<Point, Point>, radio: Set<Point>) {
         for (i in radio.minOf { it.rowNum }..radio.maxOf { it.rowNum }) {
