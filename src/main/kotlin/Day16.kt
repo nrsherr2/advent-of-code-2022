@@ -10,11 +10,13 @@ class Day16 {
             val newGames = buildList {
                 games.forEach { game ->
                     game.letItFlow()
-                    if (game.currentLocation.flowRate > 0 && !game.currentLocation.open)
-                        add(game.openCurrent())
-                    game.currentLocation.leadsTo.forEach {
-                        add(game.moveTo(it))
-                    }
+                    if (game.valves.any { !it.open }) {
+                        if (game.currentLocation.flowRate > 0 && !game.currentLocation.open)
+                            add(game.openCurrent())
+                        game.currentLocation.leadsTo.forEach {
+                            add(game.moveTo(it))
+                        }
+                    } else add(game.doNothing())
                 }
             }
             val avg = newGames.map { it.currentTotalOutput }.average().let { it - it / 6 }
