@@ -10,7 +10,7 @@ class Day16 {
             val newGames = buildList {
                 games.forEach { game ->
                     game.letItFlow()
-                    if (game.valves.any { !it.open }) {
+                    if (game.valves.any { it.flowRate > 0 && !it.open }) {
                         if (game.currentLocation.flowRate > 0 && !game.currentLocation.open)
                             add(game.openCurrent())
                         game.currentLocation.leadsTo.forEach {
