@@ -3,7 +3,7 @@ import kotlin.system.measureTimeMillis
 fun main(args: Array<String>) {
     val dayNum = 16.toString().padStart(2, '0')
     val day = Day16()
-    val part1Only = true
+    val part1Only = false
     val part2HasDifferentInput = false
     val includeTesting = true
 
