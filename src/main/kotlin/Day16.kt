@@ -1,6 +1,6 @@
 class Day16 {
     val part1TestExpected = 1651
-    val part2TestExpected = -1
+    val part2TestExpected = 1707
     fun part1(input: List<String>): Int {
         val baseValves = parseInput(input)
 
@@ -31,29 +31,29 @@ class Day16 {
         var games = listOf(baseValves.map { it.copy() }
             .let { GameStatePart2(it.first { it.name == "AA" }, it.first { it.name == "AA" }, it) })
         for (i in 1..26) {
+            val daysLeft = 26 - i
             println("MINUTE $i: ${games.size}")
             val newGames = buildList {
                 games.forEach { game ->
-                    game.letItFlow()
-                    if (game.valves.none { it.flowRate > 0 && !it.open }) add(game.doNothing())
-                    else {
-                        if (!game.personLocation.open) {
-                            if (!game.elephantLocation.open) add(game.openBoth())
-                            addAll(game.elephantLocation.leadsTo.map { game.openPersonMoveElephant(it) })
-                        }
-                        if (!game.elephantLocation.open)
-                            addAll(game.personLocation.leadsTo.map { game.movePersonOpenElephant(it) })
-                        game.personLocation.leadsTo.forEach { pl ->
-                            game.elephantLocation.leadsTo.forEach { el ->
-                                add(game.moveBoth(pl, el))
-                            }
+                    if (!game.personLocation.open) {
+                        if (!game.elephantLocation.open && game.elephantLocation != game.personLocation) add(game.openBoth(daysLeft))
+                        addAll(game.elephantLocation.leadsTo.map { game.openPersonMoveElephant(it, daysLeft) })
+                    }
+                    if (!game.elephantLocation.open)
+                        addAll(game.personLocation.leadsTo.map { game.movePersonOpenElephant(it, daysLeft) })
+                    game.personLocation.leadsTo.forEach { pl ->
+                        game.elephantLocation.leadsTo.forEach { el ->
+                            add(game.moveBoth(pl, el))
                         }
                     }
                 }
             }
-            val avg = newGames.map { it.currentTotalOutput }.average().let { it - it / 6 }
-            var newL = newGames.distinctBy { it.summary() }
-            if (i > 10) newL = newL.filter { it.currentTotalOutput >= avg }
+//            val avg = newGames.map { it.currentTotalOutput }.average().let { it - it / 6 }
+            val newL = newGames.distinctBy { it.summary() }
+            if(newL.count { it.valves.all { it.flowRate == 0 || it.open } } >= 500) {
+                return newL.maxOf { it.currentTotalOutput }+1
+            }
+//            if (i > 10) newL = newL.filter { it.currentTotalOutput >= avg }
             games = newL
         }
         return games.maxOf { it.currentTotalOutput }
@@ -83,29 +83,48 @@ class Day16 {
     data class GameStatePart2(
         var personLocation: Valve, var elephantLocation: Valve, var valves: List<Valve>, var currentTotalOutput: Int = 0
     ) {
-        fun openPersonMoveElephant(newElephant: Valve): GameStatePart2 {
+        fun openPersonMoveElephant(newElephant: Valve, daysLeft: Int): GameStatePart2 {
             val copyList = valves.map { it.copy() }
             val newPer = copyList.first { it.name == personLocation.name }
+            val newScore = newPer.flowRate * daysLeft
             newPer.open = true
             val newEle = copyList.first { it.name == newElephant.name }
-            return this.copy(personLocation = newPer, elephantLocation = newEle, valves = copyList)
+            return this.copy(
+                personLocation = newPer,
+                elephantLocation = newEle,
+                valves = copyList,
+                currentTotalOutput = currentTotalOutput + newScore
+            )
         }
 
-        fun movePersonOpenElephant(newPerson: Valve): GameStatePart2 {
+        fun movePersonOpenElephant(newPerson: Valve, daysLeft: Int): GameStatePart2 {
             val copyList = valves.map { it.copy() }
             val newPer = copyList.first { it.name == newPerson.name }
             val newEle = copyList.first { it.name == elephantLocation.name }
+            val newScore = newEle.flowRate * daysLeft
             newEle.open = true
-            return this.copy(personLocation = newPer, elephantLocation = newEle, valves = copyList)
+            return this.copy(
+                personLocation = newPer,
+                elephantLocation = newEle,
+                valves = copyList,
+                currentTotalOutput = newScore + currentTotalOutput
+            )
         }
 
-        fun openBoth(): GameStatePart2 {
+        fun openBoth(daysLeft: Int): GameStatePart2 {
             val copyList = valves.map { it.copy() }
             val newPer = copyList.first { it.name == personLocation.name }
+            val perScore = newPer.flowRate * daysLeft
             newPer.open = true
             val newEle = copyList.first { it.name == elephantLocation.name }
+            val eleScore = newEle.flowRate * daysLeft
             newEle.open = true
-            return this.copy(personLocation = newPer, elephantLocation = newEle, valves = copyList)
+            return this.copy(
+                personLocation = newPer,
+                elephantLocation = newEle,
+                valves = copyList,
+                currentTotalOutput = currentTotalOutput + perScore + eleScore
+            )
         }
 
         fun moveBoth(newPerson: Valve, newElephant: Valve): GameStatePart2 {
@@ -113,19 +132,6 @@ class Day16 {
             val newPer = copyList.first { it.name == newPerson.name }
             val newEle = copyList.first { it.name == newElephant.name }
             return this.copy(personLocation = newPer, elephantLocation = newEle, valves = copyList)
-        }
-
-        fun doNothing(): GameStatePart2 {
-            val copyList = valves.map { it.copy() }
-            val newPer = copyList.first { it.name == personLocation.name }
-            val newEle = copyList.first { it.name == elephantLocation.name }
-            return this.copy(personLocation = newPer, elephantLocation = newEle, valves = copyList)
-        }
-
-        fun letItFlow() {
-            val s = valves.sumOf { if (it.open) it.flowRate else 0 }
-//            println("valves ${valves.filter { it.open }.map { it.name }} are open releasing $s pressure")
-            currentTotalOutput += s
         }
 
         fun summary(): GameSummary2 {
