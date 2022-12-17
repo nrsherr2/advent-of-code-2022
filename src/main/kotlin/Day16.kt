@@ -4,29 +4,29 @@ class Day16 {
     val part1TestExpected = 1651
     val part2TestExpected = 1707
     fun part1(input: List<String>): Int {
-        return 1651
-//        val baseValves = parseInput(input)
-//
-//        var games = listOf(baseValves.map { it.copy() }.let { GameStatePart1(it.first { it.name == "AA" }, it) })
-//        for (i in 1..30) {
-//            println("MINUTE $i: ${games.size}")
-//            val newGames = buildList {
-//                games.forEach { game ->
-//                    game.letItFlow()
-//                    if (game.valves.any { it.flowRate > 0 && !it.open }) {
-//                        if (game.currentLocation.flowRate > 0 && !game.currentLocation.open) add(game.openCurrent())
-//                        game.currentLocation.leadsTo.forEach {
-//                            add(game.moveTo(it))
-//                        }
-//                    } else add(game.doNothing())
-//                }
-//            }
-//            val avg = newGames.map { it.currentTotalOutput }.average().let { it - it / 6 }
-//            var newL = newGames.distinctBy { it.summary() }
-//            if (i > 10) newL = newL.filter { it.currentTotalOutput >= avg }
-//            games = newL
-//        }
-//        return games.maxOf { it.currentTotalOutput }
+//        return 1651
+        val baseValves = parseInput(input)
+
+        var games = listOf(baseValves.map { it.copy() }.let { GameStatePart1(it.first { it.name == "AA" }, it) })
+        for (i in 1..30) {
+            println("MINUTE $i: ${games.size}")
+            val newGames = buildList {
+                games.forEach { game ->
+                    game.letItFlow()
+                    if (game.volvos.any { it.flowRate > 0 && !it.open }) {
+                        if (game.currentLocation.flowRate > 0 && !game.currentLocation.open) add(game.openCurrent())
+                        game.currentLocation.leadsTo.forEach {
+                            add(game.moveTo(it))
+                        }
+                    } else add(game.doNothing())
+                }
+            }
+            val avg = newGames.map { it.currentTotalOutput }.average().let { it - it / 6 }
+            var newL = newGames.distinctBy { it.summary() }
+            if (i > 10) newL = newL.filter { it.currentTotalOutput >= avg }
+            games = newL
+        }
+        return games.maxOf { it.currentTotalOutput }
     }
 
     var score = 0
