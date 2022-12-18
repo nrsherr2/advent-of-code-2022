@@ -23,6 +23,9 @@ data class Point3D(var rowNum: Int, var colNum: Int, var spaceNum: Int) {
     val x = colNum
     val y = rowNum
     val z = spaceNum
+
+    operator fun plus(other: Point3D) =
+        Point3D(this.rowNum + other.rowNum, this.colNum + other.colNum, this.spaceNum + other.spaceNum)
 }
 
 fun <T> List<List<T>>.access(point: Point) = when {
