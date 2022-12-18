@@ -24,17 +24,17 @@ class Day18 {
         val maxZ = points.maxOf { it.z }
         val connectedToOutside = mutableListOf<Frag>()
         return points.asSequence().flatMapIndexed { idx, it ->
-            println("$idx: $it")
+//            println("$idx: $it")
             it.neighbors()
         }.filter { !points.contains(it) }.count { ne ->
-            println(ne)
+//            println(ne)
             var bubble = listOf(ne)
             val totalBubble = mutableListOf(ne)
             while (bubble.isNotEmpty()) {
                 bubble = bubble.flatMap { it.neighbors() }.distinct()
                     .filter { !points.contains(it) && !totalBubble.contains(it) }
                 totalBubble += bubble
-                println("bubble: ${bubble.size}\t total: ${totalBubble.size}")
+//                println("bubble: ${bubble.size}\t total: ${totalBubble.size}")
                 if (bubble.any {
                         it in connectedToOutside ||
                                 it.x == maxX || it.x == minX ||
