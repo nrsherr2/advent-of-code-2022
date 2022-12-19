@@ -55,7 +55,7 @@ class Day17 {
     fun List<Int>.visualize() {
         this.forEach {
             print('|')
-            it.toString(2).padStart(7, '0').map { if (it == '0') '.' else '#' }.forEach { print(it) }
+            it.toString(2).padStart(7, '0').map { if (it == '0') '░' else '▓' }.forEach { print(it) }
             println('|')
         }
     }
