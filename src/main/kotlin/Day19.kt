@@ -16,10 +16,11 @@ class Day19 {
     }
 
     private fun dfs(gs: GameState, day: Int = 1, layer: Int = 0): Int {
-        if (day == 25) {
+        if (day >= 24) {
             return gs.final
         }
-        val justWait = waitUntilEnd(gs.deepCopy(), day, layer + 1)
+        if (day == 23 || layer >= 30) return waitUntilEnd(gs.deepCopy(), day, layer + 1)
+        val justWait = if (gs.robots[Material.GEODE] != null) waitUntilEnd(gs.deepCopy(), day, layer + 1) else null
         val newOreBot = buildOre(gs.deepCopy(), day, layer + 1)
         val newClayBot = buildClay(gs.deepCopy(), day, layer + 1)
         val newObsBot =
@@ -30,10 +31,11 @@ class Day19 {
     }
 
     private fun buildOre(gs: GameState, day: Int = 1, layer: Int): Int {
-        if (layer < 7) println("Layer $layer Ore")
+        if (day >= 24) return gs.final
+//        println("Layer $layer Day $day Ore")
         var curDay = day
         do {
-            if (curDay == 24) return gs.final
+            if (curDay >= 24) return gs.final
             curDay++
             extractResources(gs)
         } while (gs.materials.getOrDefault(Material.ORE, 0) < gs.costs[Material.ORE]!!.cost[Material.ORE]!!)
@@ -43,10 +45,11 @@ class Day19 {
     }
 
     private fun buildClay(gs: GameState, day: Int = 1, layer: Int): Int {
-        if (layer < 7) println("Layer $layer Clay")
+        if (day >= 24) return gs.final
+//        println("Layer $layer Day $day Clay")
         var curDay = day
         do {
-            if (curDay == 24) return gs.final
+            if (curDay >= 24) return gs.final
             curDay++
             extractResources(gs)
         } while (gs.materials.getOrDefault(Material.ORE, 0) < gs.costs[Material.CLAY]!!.cost[Material.ORE]!!)
@@ -56,11 +59,12 @@ class Day19 {
     }
 
     private fun buildObs(gs: GameState, day: Int = 1, layer: Int): Int {
-        if (layer < 7) println("Layer $layer Obsidian")
+        if (day >= 24) return gs.final
+//       println("Layer $layer Day $day Obsidian")
         var curDay = day
         val cost = gs.costs[Material.OBSIDIAN]!!
         do {
-            if (curDay == 24) return gs.final
+            if (curDay >= 24) return gs.final
             curDay++
             extractResources(gs)
         } while (
@@ -74,11 +78,12 @@ class Day19 {
     }
 
     private fun buildGeo(gs: GameState, day: Int = 1, layer: Int): Int {
-        if (layer < 10) println("Layer $layer Geode")
+        if (day >= 24) return gs.final
+//        println("Layer $layer Day $day Geode")
         var curDay = day
         val cost = gs.costs[Material.GEODE]!!
         do {
-            if (curDay == 24) return gs.final
+            if (curDay >= 24) return gs.final
             curDay++
             extractResources(gs)
         } while (
@@ -92,8 +97,9 @@ class Day19 {
     }
 
     private fun waitUntilEnd(gs: GameState, day: Int, layer: Int): Int {
-        if (layer < 7) println("Layer $layer wait")
-        for (i in day..25) {
+        if (day >= 24) return gs.final
+        if (day < 17) println("Layer $layer Day $day wait")
+        for (i in day..24) {
             for (mat in Material.values()) {
                 gs.materials[mat] = gs.materials.getOrDefault(mat, 0) + gs.robots.getOrDefault(mat, 0)
             }
