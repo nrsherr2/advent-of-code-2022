@@ -5,7 +5,7 @@ class Day19 {
     fun part1(input: List<String>): Int {
         val blueprintStates = parseInput(input)
         return blueprintStates.mapIndexed { index, gameState ->
-            val noth = doNothing(gameState).maxValue
+            val noth = dfs(gameState)
             println("FINAL SCORE: $noth")
             noth * (index + 1)
         }.sum()
@@ -15,81 +15,104 @@ class Day19 {
         TODO()
     }
 
-    private fun doNothing(gameState: GameState, time: Int = 1): GameState {
-//        if (time <= 8) println("=== MINUTE $time : Do Nothing ===")
-        extractResources(gameState)
-        return dfsLower(time, gameState)
-    }
-
-    fun buildBot(gameState: GameState, time: Int, material: Material): GameState {
-//        if (time <= 8) println("=== MINUTE $time : Build $material Robot ===")
-        val robotCost = gameState.definitions[material]!!
-        robotCost.cost.forEach { (mat, cost) ->
-            gameState.currentResources[mat] = gameState.currentResources[mat]!! - cost
+    private fun dfs(gs: GameState, day: Int = 1, layer: Int = 0): Int {
+        if (day == 25) {
+            return gs.final
         }
-        extractResources(gameState)
-        gameState.robots[material] = gameState.robots.getOrDefault(material, 0) + 1
-//        println("You now have ${gameState.robots[material]} $material robots")
-        return dfsLower(time, gameState)
+        val justWait = waitUntilEnd(gs.deepCopy(), day, layer + 1)
+        val newOreBot = buildOre(gs.deepCopy(), day, layer + 1)
+        val newClayBot = buildClay(gs.deepCopy(), day, layer + 1)
+        val newObsBot =
+            if (gs.robots.getOrDefault(Material.CLAY, 0) != 0) buildObs(gs.deepCopy(), day, layer + 1) else null
+        val newGeoBot =
+            if (gs.robots.getOrDefault(Material.OBSIDIAN, 0) != 0) buildGeo(gs.deepCopy(), day, layer + 1) else null
+        return listOfNotNull(justWait, newOreBot, newClayBot, newObsBot, newGeoBot).max()
     }
 
-    private fun doNothingRest(gameState: GameState, time: Int = 1): GameState {
-        val numGeodes = gameState.currentResources.getOrDefault(Material.GEODE, 0)
-        val numGeodeBots = gameState.robots.getOrDefault(Material.GEODE, 0)
-        val score = numGeodes + (numGeodeBots * (25 - time))
-        if (score > gameState.maxValue) {
-            println(score)
-            gameState.maxValue = score
-        }
-        return gameState
+    private fun buildOre(gs: GameState, day: Int = 1, layer: Int): Int {
+        if (layer < 7) println("Layer $layer Ore")
+        var curDay = day
+        do {
+            if (curDay == 24) return gs.final
+            curDay++
+            extractResources(gs)
+        } while (gs.materials.getOrDefault(Material.ORE, 0) < gs.costs[Material.ORE]!!.cost[Material.ORE]!!)
+        gs.materials[Material.ORE] = gs.materials[Material.ORE]!! - gs.costs[Material.ORE]!!.cost[Material.ORE]!!
+        gs.robots[Material.ORE] = gs.robots[Material.ORE]!! + 1
+        return dfs(gs.deepCopy(), curDay, layer)
     }
 
-    private fun dfsLower(time: Int, gameState: GameState): GameState {
-        if (time == 24) {
-            gameState.applyMax(doNothingRest(gameState, 25))
-            return gameState
-        } else {
-//            if(gameState.maxValue > 0 && time > gameState.firstBotOnline && gameState.robots[Material.GEODE] == null){
-//                gameState.applyMax(doNothingRest(gameState,time))
-//                return gameState
-//            }
-//            if (time >= 23 && gameState.robots[Material.GEODE] == null) {
-////                println("SLOWPOKE")
-//                 gameState.applyMax(doNothingRest(gameState, time))
-//                return gameState
-//            }
-//            if (gameState.maxValue > 0 && gameState.currentResources.getOrDefault(Material.GEODE, 0) > 1) {
-//
-////                val iLast = gameState.records.lastIndex
-////                if (gameState.records[iLast].predict(time) < gameState.maxRecords[iLast].predict(time)) {
-//////                    println("OVERRIDE")
-////                    return gameState
-////                }
-//            }
-            gameState.applyMax(doNothing(gameState.deepCopy(), time + 1))
-            gameState.definitions.forEach {
-                if (gameState.currentResources.canBuild(it.value)) gameState.applyMax(
-                    buildBot(
-                        gameState.deepCopy(), time + 1, it.key
-                    )
-                )
+    private fun buildClay(gs: GameState, day: Int = 1, layer: Int): Int {
+        if (layer < 7) println("Layer $layer Clay")
+        var curDay = day
+        do {
+            if (curDay == 24) return gs.final
+            curDay++
+            extractResources(gs)
+        } while (gs.materials.getOrDefault(Material.ORE, 0) < gs.costs[Material.CLAY]!!.cost[Material.ORE]!!)
+        gs.materials[Material.ORE] = gs.materials[Material.ORE]!! - gs.costs[Material.ORE]!!.cost[Material.ORE]!!
+        gs.robots[Material.CLAY] = gs.robots.getOrDefault(Material.CLAY, 0) + 1
+        return dfs(gs.deepCopy(), curDay, layer)
+    }
+
+    private fun buildObs(gs: GameState, day: Int = 1, layer: Int): Int {
+        if (layer < 7) println("Layer $layer Obsidian")
+        var curDay = day
+        val cost = gs.costs[Material.OBSIDIAN]!!
+        do {
+            if (curDay == 24) return gs.final
+            curDay++
+            extractResources(gs)
+        } while (
+            gs.materials.getOrDefault(Material.ORE, 0) < cost.cost[Material.ORE]!! &&
+            gs.materials.getOrDefault(Material.CLAY, 0) < cost.cost[Material.CLAY]!!
+        )
+        gs.materials[Material.ORE] = gs.materials[Material.ORE]!! - cost.cost[Material.ORE]!!
+        gs.materials[Material.CLAY] = gs.materials[Material.CLAY]!! - cost.cost[Material.CLAY]!!
+        gs.robots[Material.OBSIDIAN] = gs.robots.getOrDefault(Material.OBSIDIAN, 0) + 1
+        return dfs(gs.deepCopy(), curDay, layer)
+    }
+
+    private fun buildGeo(gs: GameState, day: Int = 1, layer: Int): Int {
+        if (layer < 10) println("Layer $layer Geode")
+        var curDay = day
+        val cost = gs.costs[Material.GEODE]!!
+        do {
+            if (curDay == 24) return gs.final
+            curDay++
+            extractResources(gs)
+        } while (
+            gs.materials.getOrDefault(Material.OBSIDIAN, 0) < cost.cost[Material.OBSIDIAN]!! &&
+            gs.materials.getOrDefault(Material.CLAY, 0) < cost.cost[Material.OBSIDIAN]!!
+        )
+        gs.materials[Material.ORE] = gs.materials[Material.ORE]!! - cost.cost[Material.ORE]!!
+        gs.materials[Material.OBSIDIAN] = gs.materials[Material.OBSIDIAN]!! - cost.cost[Material.OBSIDIAN]!!
+        gs.robots[Material.GEODE] = gs.robots.getOrDefault(Material.GEODE, 0) + 1
+        return dfs(gs.deepCopy(), curDay, layer)
+    }
+
+    private fun waitUntilEnd(gs: GameState, day: Int, layer: Int): Int {
+        if (layer < 7) println("Layer $layer wait")
+        for (i in day..25) {
+            for (mat in Material.values()) {
+                gs.materials[mat] = gs.materials.getOrDefault(mat, 0) + gs.robots.getOrDefault(mat, 0)
             }
-            return gameState
         }
+        return gs.final
     }
 
     private fun extractResources(gameState: GameState) {
         Material.values().forEach { mat ->
             val robotCount = gameState.robots.getOrDefault(mat, 0)
             if (robotCount > 0) {
-                val old = gameState.currentResources.getOrDefault(mat, 0)
-                gameState.currentResources[mat] = old + robotCount
+                val old = gameState.materials.getOrDefault(mat, 0)
+                gameState.materials[mat] = old + robotCount
 //                println("$robotCount $mat robots: $old -> ${gameState.currentResources[mat]}")
             }
         }
     }
 
-    private fun parseInput(input: List<String>): List<GameState> = input.map { line ->
+    private fun parseInput(input: List<String>) = input.map { line ->
         val (oreBase, clayBase, obsBase, geoBase) = line.split(".")
         val mp = buildMap {
             put(
@@ -115,44 +138,17 @@ class Day19 {
         GameState(mutableMapOf(Material.ORE to 1), mutableMapOf(), mp)
     }
 
-    enum class Material { ORE, CLAY, OBSIDIAN, GEODE }
-    data class RobotDef(val cost: Map<Material, Int>)
     data class GameState(
         val robots: MutableMap<Material, Int>,
-        val currentResources: MutableMap<Material, Int>,
-        val definitions: Map<Material, RobotDef>,
-        var maxValue: Int = 0,
-        var firstBotOnline: Int = 0
+        val materials: MutableMap<Material, Int>,
+        val costs: Map<Material, RobotDef>
     ) {
-        fun deepCopy() = this.copy(
-            robots = robots.toMutableMap(),
-            currentResources = currentResources.toMutableMap(),
-            definitions = definitions.toMutableMap(),
-            maxValue,
-            firstBotOnline
-        )
+        fun deepCopy() = this.copy(robots.toMutableMap(), materials.toMutableMap(), costs.mapValues { it.value.copy() })
 
-        private fun keepTime() = TimeRecord(
-            this.robots.getOrDefault(Material.GEODE, 0), this.currentResources.getOrDefault(Material.GEODE, 0)
-        )
-
-        fun applyMax(other: GameState) {
-            if (other.maxValue > this.maxValue) {
-                this.maxValue = other.maxValue
-                this.firstBotOnline = other.firstBotOnline
-            }
-        }
+        val final: Int get() = materials.getOrDefault(Material.GEODE, 0)
     }
 
-    fun Map<Material, Int>.canBuild(definition: RobotDef): Boolean {
-        return Material.values().all {
-            this.getOrDefault(it, 0) >= definition.cost.getOrDefault(it, 0)
-        }
-    }
+    enum class Material { ORE, CLAY, OBSIDIAN, GEODE }
+    data class RobotDef(val cost: Map<Material, Int>)
 
-    data class TimeRecord(var numGeodeBots: Int, var numGeodes: Int) {
-        fun predict(dayNum: Int): Int {
-            return numGeodes + numGeodeBots * (25 - dayNum)
-        }
-    }
 }
