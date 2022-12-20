@@ -19,6 +19,14 @@ data class Point(var rowNum: Int, var colNum: Int) {
     operator fun times(projector: Int) = Point(rowNum * projector, colNum * projector)
 }
 
+data class PointL(var rowNum: Long, var colNum: Long) {
+    val y = rowNum
+    val x = colNum
+    operator fun plus(other: PointL): PointL = PointL(this.rowNum + other.rowNum, this.colNum + other.colNum)
+
+    operator fun times(projector: Int) = PointL(rowNum * projector, colNum * projector)
+}
+
 data class Point3D(var rowNum: Int, var colNum: Int, var spaceNum: Int) {
     val x = colNum
     val y = rowNum

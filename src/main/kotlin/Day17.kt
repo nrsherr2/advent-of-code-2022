@@ -1,103 +1,82 @@
 class Day17 {
     val part1TestExpected = 3068
-    val part2TestExpected = -1
+    val part2TestExpected = 1514285714288
     fun part1(input: List<String>): Int {
         val directions = input.first().map { it }.toMutableList()
         val rockQueue = mutableListOf(minus, plus, revL, tetGod, blok)
-        val order = (1..2022).map { rockQueue.rotate().toList() }
-        val board = mutableListOf(0b1111111)
+        val order = (1..2022).map { rockQueue.rotate().map { it.copy() } }
+        val board: MutableList<PointL> = floor.toMutableList()
         order.forEach { block ->
-            var bk = block
-            //grow board and populate new block
-            val topSpot = board.indexOfFirst { it > 0 }.let { if (it < 0) board.lastIndex else it }
-            val desiredSize = board.size - topSpot + 7
-            while (board.size < desiredSize) board.add(0, 0)
-            var blockIdx = 3
-            var condition = true
-            while (condition) {
-                val dir = directions.rotate()
-                when (dir) {
-                    '>' -> {
-//                        println("push right")
-                        if (bk.canShr(board, blockIdx)) {
-//                            println("shr")
-                            bk = bk.shr()
-                        }
-                    }
-
-                    '<' -> {
-//                        println("push left")
-                        if (bk.canShl(board, blockIdx)) {
-//                            println("shl")
-                            bk = bk.shl()
-                        }
-                    }
-                }
-                if (notBlockedDown(board, bk, blockIdx)) blockIdx++ else condition = false
-            }
-            bk.forEachIndexed { index, line ->
-                val row = board[blockIdx - (3 - index)]
-                board[blockIdx - (3 - index)] = row or line
-            }
-//            board.visualize()
-//            println()
+            dropBlock(block, board, directions)
         }
-        board.visualize()
-        return board.size - board.indexOfFirst { it > 0 }
+        visualize(board)
+        return board.maxOf { it.rowNum }.toInt()
     }
 
-    fun part2(input: List<String>): Int {
+    fun part2(input: List<String>): Long {
         val directions = input.first().map { it }.reversed().toMutableList()
         val rockQueue = mutableListOf(blok, tetGod, revL, plus, minus)
+        val board: MutableList<PointL> = floor.toMutableList()
+        val deltas = mutableListOf<List<Double>>()
+
         TODO()
     }
 
-    fun List<Int>.visualize() {
-        this.forEach {
+    private fun dropBlock(
+        block: List<PointL>,
+        board: MutableList<PointL>,
+        directions: MutableList<Char>
+    ) {
+        var bk = block.map { pt -> pt + PointL(board.maxOf { it.rowNum } + 4, 2) }
+        var condition = true
+        while (condition) {
+            when (directions.rotate()) {
+                '>' -> {
+                    val potential = bk.map { it + shrDelta }
+                    if (potential.none { it.colNum == 7L || board.contains(it) }) {
+                        bk = potential
+                    }
+                }
+
+                '<' -> {
+                    val potential = bk.map { it + shlDelta }
+                    if (potential.none { it.colNum == -1L || board.contains(it) }) {
+                        bk = potential
+                    }
+                }
+            }
+            val potential = bk.map { it + dropDelta }
+            if (potential.any { board.contains(it) }) {
+                condition = false
+            } else {
+                bk = potential
+            }
+        }
+        board.addAll(bk)
+    }
+
+    fun visualize(board: List<PointL>) {
+        for (i in board.maxOf { it.rowNum } downTo board.minOf { it.rowNum }) {
             print('|')
-            it.toString(2).padStart(7, '0').map { if (it == '0') '░' else '▓' }.forEach { print(it) }
-            println('|')
+            for (j in 0L..6) {
+                print(if (board.contains(PointL(i, j))) '▓' else '░')
+            }
+            print('|')
+            println()
         }
+        println("+-------+")
     }
 
-    fun List<Int>.canShl(board: List<Int>, bottomRowNum: Int): Boolean {
-        if (this.any { it and 0b1000000 != 0 }) return false
-        val testShr = this.shl()
-        testShr.forEachIndexed { index, i ->
-            val row = board[bottomRowNum - (3 - index)]
-            if (i and row != 0) return false
-        }
-        return true
-    }
 
-    fun List<Int>.shl(bitsLeft: Int = 1): List<Int> {
-        return map { it.shl(bitsLeft) }
-    }
-
-    fun List<Int>.canShr(board: List<Int>, bottomRowNum: Int): Boolean {
-        if (this.any { it and 1 == 1 }) return false
-        val testShr = this.shr()
-        testShr.forEachIndexed { index, i ->
-            val row = board[bottomRowNum - (3 - index)]
-            if (i and row != 0) return false
-        }
-        return true
-    }
-
-    fun List<Int>.shr(bitsRight: Int = 1): List<Int> {
-        return map { it.shr(bitsRight) }
-    }
-
-    fun notBlockedDown(board: List<Int>, block: List<Int>, boardRowNum: Int): Boolean {
-        if (boardRowNum + 1 == board.lastIndex) return false
-        return board[boardRowNum + 1] and block.last() == 0
-    }
-
-    val minus = listOf(0, 0, 0, 0b1111.shl(1))
-    val plus = listOf(0, 0b010.shl(2), 0b111.shl(2), 0b010.shl(2))
-    val revL = listOf(0, 0b1.shl(2), 0b1.shl(2), 0b111.shl(2))
-    val tetGod = listOf(1.shl(4), 1.shl(4), 1.shl(4), 1.shl(4))
-    val blok = listOf(0, 0, 0b11.shl(3), 0b11.shl(3))
+    val minus = listOf(PointL(0, 0), PointL(0, 1), PointL(0, 2), PointL(0, 3))
+    val plus = listOf(PointL(1, 0), PointL(0, 1), PointL(1, 1), PointL(2, 1), PointL(1, 2))
+    val revL = listOf(PointL(0, 0), PointL(0, 1), PointL(2, 2), PointL(1, 2), PointL(0, 2))
+    val tetGod = listOf(PointL(0, 0), PointL(1, 0), PointL(2, 0), PointL(3, 0))
+    val blok = listOf(PointL(0, 0), PointL(1, 1), PointL(1, 0), PointL(0, 1))
+    val floor = listOf(PointL(0, 0), PointL(0, 1), PointL(0, 2), PointL(0, 3), PointL(0, 4), PointL(0, 5), PointL(0, 6))
+    val shrDelta = PointL(0, 1)
+    val shlDelta = PointL(0, -1)
+    val dropDelta = PointL(-1, 0)
 
 
     fun <T> MutableList<T>.rotate(): T {
