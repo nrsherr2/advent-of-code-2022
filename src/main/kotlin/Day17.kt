@@ -7,52 +7,88 @@ class Day17 {
         val order = (1..2022).map { rockQueue.rotate().map { it.copy() } }
         val board: MutableList<PointL> = floor.toMutableList()
         order.forEach { block ->
-            dropBlock(block, board, directions)
+            var bk = block.map { pt -> pt + PointL(board.maxOf { it.rowNum } + 4, 2) }
+            var condition = true
+            while (condition) {
+                when (directions.rotate()) {
+                    '>' -> {
+                        val potential = bk.map { it + shrDelta }
+                        if (potential.none { it.colNum == 7L || board.contains(it) }) {
+                            bk = potential
+                        }
+                    }
+
+                    '<' -> {
+                        val potential = bk.map { it + shlDelta }
+                        if (potential.none { it.colNum == -1L || board.contains(it) }) {
+                            bk = potential
+                        }
+                    }
+                }
+                val potential = bk.map { it + dropDelta }
+                if (potential.any { board.contains(it) }) {
+                    condition = false
+                } else {
+                    bk = potential
+                }
+            }
+            board.addAll(bk)
         }
         visualize(board)
         return board.maxOf { it.rowNum }.toInt()
     }
 
     fun part2(input: List<String>): Long {
-        val directions = input.first().map { it }.reversed().toMutableList()
-        val rockQueue = mutableListOf(blok, tetGod, revL, plus, minus)
+        val directions = input.first().map { it }
+        val rockQueue = mutableListOf(minus, plus, revL, tetGod, blok)
         val board: MutableList<PointL> = floor.toMutableList()
-        val deltas = mutableListOf<List<Double>>()
+        val situations = mutableListOf<Situation>()
+        var numRocks = 0
+        fun height() = board.maxOf { it.rowNum }
+        var directionIdx = -1
+        //1_000_000_000_000
+        //https://github.com/ivzb/advent_of_code/blob/master/src/main/kotlin/_2022/Task17.kt
+        for (i in 0..1_000_000_000_000) {
+            val block = rockQueue.rotate().map { it.copy() }
+            var bk = block.map { pt -> pt + PointL(board.maxOf { it.rowNum } + 4, 2) }
+            numRocks++
+            var condition = true
+            while (condition) {
+                directionIdx = (directionIdx + 1) % directions.size
+                val dir = directions[directionIdx]
+                val sit = Situation(directionIdx, block, numRocks, height(), board.map { it.copy() })
+                situations.firstOrNull { it.directionIdx == sit.directionIdx && it.block == block }?.let {
+                    visualize(it.board)
+                    visualize(board)
+                    println("AAAAAAAAAAAA")
+                    println()
+                }
+                situations.add(sit)
+                when (dir) {
+                    '>' -> {
+                        val potential = bk.map { it + shrDelta }
+                        if (potential.none { it.colNum == 7L || board.contains(it) }) {
+                            bk = potential
+                        }
+                    }
 
-        TODO()
-    }
-
-    private fun dropBlock(
-        block: List<PointL>,
-        board: MutableList<PointL>,
-        directions: MutableList<Char>
-    ) {
-        var bk = block.map { pt -> pt + PointL(board.maxOf { it.rowNum } + 4, 2) }
-        var condition = true
-        while (condition) {
-            when (directions.rotate()) {
-                '>' -> {
-                    val potential = bk.map { it + shrDelta }
-                    if (potential.none { it.colNum == 7L || board.contains(it) }) {
-                        bk = potential
+                    '<' -> {
+                        val potential = bk.map { it + shlDelta }
+                        if (potential.none { it.colNum == -1L || board.contains(it) }) {
+                            bk = potential
+                        }
                     }
                 }
-
-                '<' -> {
-                    val potential = bk.map { it + shlDelta }
-                    if (potential.none { it.colNum == -1L || board.contains(it) }) {
-                        bk = potential
-                    }
+                val potential = bk.map { it + dropDelta }
+                if (potential.any { board.contains(it) }) {
+                    condition = false
+                } else {
+                    bk = potential
                 }
             }
-            val potential = bk.map { it + dropDelta }
-            if (potential.any { board.contains(it) }) {
-                condition = false
-            } else {
-                bk = potential
-            }
+            board.addAll(bk)
         }
-        board.addAll(bk)
+        TODO()
     }
 
     fun visualize(board: List<PointL>) {
@@ -78,6 +114,14 @@ class Day17 {
     val shlDelta = PointL(0, -1)
     val dropDelta = PointL(-1, 0)
 
+
+    data class Situation(
+        val directionIdx: Int,
+        val block: List<PointL>,
+        val numRocksDown: Int,
+        val height: Long,
+        val board: List<PointL>
+    )
 
     fun <T> MutableList<T>.rotate(): T {
         val latest = this.removeFirst()
