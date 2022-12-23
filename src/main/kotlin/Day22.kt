@@ -131,12 +131,12 @@ class Day22 {
         groups: List<List<Map.Entry<Point, Boolean>>>
     ): Triple<Point, Int, Point> {
         val newDir: Point
+        val source = groups.indexOfFirst { it.map { it.key }.contains(currentLocation) }
+        val srcGroup = groups[source]
+        val stdColNum = currentLocation.colNum - srcGroup.minCol()
+        val stdRowNum = currentLocation.rowNum - srcGroup.minRow()
         val targetPoint: Point = if (isTest) {
-            val source = groups.indexOfFirst { it.map { it.key }.contains(currentLocation) }
-            val srcGroup = groups[source]
-            val stdColNum = currentLocation.colNum - srcGroup.minCol()
-            val stdRowNum = currentLocation.rowNum - srcGroup.minRow()
-            println("$source ${directionValue(currentDirection)} $currentLocation $stdRowNum $stdColNum")
+//            println("$source ${directionValue(currentDirection)} $currentLocation $stdRowNum $stdColNum")
             when (source to directionValue(currentDirection)) {
 
 
@@ -220,7 +220,85 @@ class Day22 {
 
                 else -> TODO()
             }
-        } else TODO("REAL PART 2 BABY")
+        } else {
+            when (source to directionValue(currentDirection)) {
+                0 to 2 -> {
+                    availableDirections.rotateRight()
+                    newDir = availableDirections.rotateRight()
+                    Point(groups[3].maxRow() - stdRowNum, groups[3].minCol())
+                }
+
+                0 to 3 -> {
+                    newDir = availableDirections.rotateRight()
+                    Point(groups[5].minRow() + stdColNum, groups[5].minCol())
+                }
+
+                1 to 0 -> {
+                    availableDirections.rotateRight()
+                    newDir = availableDirections.rotateRight()
+                    Point(groups[4].maxRow() - stdRowNum, groups[4].maxCol())
+                }
+
+                1 to 1 -> {
+                    newDir = availableDirections.rotateRight()
+                    Point(groups[2].minRow() + stdColNum, groups[2].maxCol())
+                }
+
+                1 to 3 -> {
+                    newDir = currentDirection
+                    Point(groups[5].maxRow(), groups[5].minCol() + stdColNum)
+                }
+
+                2 to 0 -> {
+                    newDir = availableDirections.rotateLeft()
+                    Point(groups[1].maxRow(), groups[1].minCol() + stdRowNum)
+                }
+
+                2 to 2 -> {
+                    newDir = availableDirections.rotateLeft()
+                    Point(groups[3].minRow(), groups[3].minCol() + stdRowNum)
+                }
+
+                3 to 2 -> {
+                    availableDirections.rotateRight()
+                    newDir = availableDirections.rotateRight()
+                    Point(groups[0].maxRow() - stdRowNum, groups[0].minCol())
+                }
+
+                3 to 3 -> {
+                    newDir = availableDirections.rotateRight()
+                    Point(groups[2].minRow() + stdColNum, groups[2].minCol())
+                }
+
+                4 to 0 -> {
+                    availableDirections.rotateRight()
+                    newDir = availableDirections.rotateRight()
+                    Point(groups[1].maxRow() - stdRowNum, groups[1].maxCol())
+                }
+
+                4 to 1 -> {
+                    newDir = availableDirections.rotateLeft()
+                    Point(groups[5].minRow() + stdColNum, groups[5].maxCol())
+                }
+
+                5 to 0 -> {
+                    newDir = availableDirections.rotateLeft()
+                    Point(groups[4].maxRow(), groups[4].minCol() + stdRowNum)
+                }
+
+                5 to 1 -> {
+                    newDir = currentDirection
+                    Point(groups[1].minRow(), groups[1].minCol() + stdColNum)
+                }
+
+                5 to 2 -> {
+                    newDir = availableDirections.rotateLeft()
+                    Point(groups[0].minRow(), groups[0].minCol() + stdRowNum)
+                }
+
+                else -> TODO((source to directionValue(currentDirection)).toString())
+            }
+        }
         if (!points.containsKey(targetPoint)) {
             visualize(points, prevPoints, targetPoint)
             throw IllegalArgumentException(targetPoint.toString())
