@@ -123,9 +123,4 @@ class Day17 {
         val board: List<PointL>
     )
 
-    fun <T> MutableList<T>.rotate(): T {
-        val latest = this.removeFirst()
-        this.add(latest)
-        return latest
-    }
 }

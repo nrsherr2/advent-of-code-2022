@@ -145,3 +145,9 @@ fun <T> dijkstra(grid: Set<Node<T>>, source: Node<T>, end: Node<T>): DijkstraRes
     }
     return DijkstraResults(grid, source, end, dist, hops)
 }
+
+fun <T> MutableList<T>.rotate(): T {
+    val latest = this.removeFirst()
+    this.add(latest)
+    return latest
+}
