@@ -8,7 +8,7 @@ class Day22 {
 
     fun solve(input: List<String>, part: Int): Int {
         val isTest = input.size == 14
-        val availableDirections = mutableListOf(Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0))
+//        var availableDirections = mutableListOf(Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0))
         val (pointVis, directions) = input.indexOfFirst { it.isBlank() }.let { input.slice(0 until it) to input.last() }
         val points = buildMap<Point, Boolean> {
             pointVis.forEachIndexed { rowNum, s ->
@@ -35,6 +35,7 @@ class Day22 {
             else {
                 var i = 0
                 val sit = str.toInt()
+                println("$sit $it")
                 while (i < sit) {
                     val nextPoint = currentLocation + currentDirection
                     if (points.containsKey(nextPoint)) {
@@ -51,25 +52,27 @@ class Day22 {
                             i,
                             prevPoints,
                             sit
-                        ) else walkOffTheEdgePart2(
-                            points,
-                            currentDirection,
-                            currentLocation,
-                            i,
-                            prevPoints,
-                            sit,
-                            isTest,
-                            availableDirections,
-                            groups
-                        )
+                        ) else {
+                            walkOffTheEdgePart2(
+                                points,
+                                currentDirection,
+                                currentLocation,
+                                i,
+                                prevPoints,
+                                sit,
+                                isTest,
+                                groups
+                            )
+                        }
                         currentLocation = newCurrent
                         i = newI
                         currentDirection = newDir
+                        prevPoints[currentLocation] = currentDirection
                     }
                 }
                 currentDirection = when (it) {
-                    'R' -> availableDirections.rotateRight()
-                    'L' -> availableDirections.rotateLeft()
+                    'R' -> currentDirection.rotateRight()
+                    'L' -> currentDirection.rotateLeft()
                     ' ' -> currentDirection
                     else -> TODO()
                 }
@@ -99,7 +102,7 @@ class Day22 {
         i: Int,
         prevPoints: MutableMap<Point, Point>,
         sit: Int
-    ): Triple<Point, Int, Point> {
+    ): DCL {
         var currentLocation1 = currentLocation
         var i1 = i
         val backItUp = currentDirection * -1
@@ -115,7 +118,7 @@ class Day22 {
         } else {
             i1 = sit
         }
-        return Triple(currentLocation1, i1, currentDirection)
+        return DCL(currentLocation1, i1, currentDirection)
     }
 
 
@@ -127,9 +130,8 @@ class Day22 {
         prevPoints: MutableMap<Point, Point>,
         sit: Int,
         isTest: Boolean,
-        availableDirections: MutableList<Point>,
         groups: List<List<Map.Entry<Point, Boolean>>>
-    ): Triple<Point, Int, Point> {
+    ): DCL {
         val newDir: Point
         val source = groups.indexOfFirst { it.map { it.key }.contains(currentLocation) }
         val srcGroup = groups[source]
@@ -141,106 +143,101 @@ class Day22 {
 
 
                 0 to 0 -> {
-                    availableDirections.rotateLeft()
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight().rotateRight()
                     Point(groups[5].maxRow() - stdRowNum, groups[5].maxCol())
                 }
 
                 0 to 2 -> {
-                    newDir = availableDirections.rotateLeft()
+                    newDir = currentDirection.rotateLeft()
                     Point(groups[2].minRow(), groups[2].minCol() + stdRowNum)
                 }
 
                 0 to 3 -> {
-                    availableDirections.rotateRight()
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight().rotateRight()
                     Point(groups[1].minRow(), groups[1].maxCol() - stdRowNum)
                 }
 
                 2 to 3 -> {
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight()
                     Point(groups[0].minRow() + stdColNum, groups[0].minCol())
                 }
 
                 2 to 1 -> {
-                    newDir = availableDirections.rotateLeft()
+                    newDir = currentDirection.rotateLeft()
                     Point(groups[4].maxRow() - stdColNum, groups[4].minCol())
                 }
 
                 1 to 1 -> {
-                    availableDirections.rotateRight()
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight().rotateRight()
                     Point(groups[4].maxRow(), groups[4].maxCol() - stdColNum)
                 }
 
                 1 to 2 -> {
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight()
                     Point(groups[5].maxRow(), groups[5].maxCol() - stdRowNum)
                 }
 
                 1 to 3 -> {
-                    availableDirections.rotateRight()
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight().rotateRight()
                     Point(groups[0].minRow(), groups[0].maxCol() - stdColNum)
                 }
 
                 3 to 0 -> {
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight()
                     val newCol = groups[5].maxCol() - stdRowNum
                     val newRow = groups[5].minRow()
                     Point(newRow, newCol)
                 }
 
                 4 to 1 -> {
-                    availableDirections.rotateRight()
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight().rotateRight()
                     Point(groups[1].maxRow(), groups[1].maxCol() - stdColNum)
                 }
 
                 4 to 2 -> {
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight()
                     Point(groups[2].maxRow(), groups[2].maxCol() - stdRowNum)
                 }
 
                 5 to 0 -> {
-                    availableDirections.rotateRight()
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight().rotateRight()
                     Point(groups[0].maxRow() - stdRowNum, groups[0].maxCol())
                 }
 
                 5 to 1 -> {
-                    newDir = availableDirections.rotateLeft()
+                    newDir = currentDirection.rotateLeft()
                     Point(groups[1].maxRow() - stdColNum, groups[1].minCol())
                 }
 
                 5 to 3 -> {
-                    newDir = availableDirections.rotateLeft()
+                    newDir = currentDirection.rotateLeft()
                     Point(groups[3].maxRow() - stdColNum, groups[3].maxCol())
                 }
 
                 else -> TODO()
             }
         } else {
+//            println("$source ${directionValue(currentDirection)} $currentLocation $stdRowNum $stdColNum")
+//            visualize(points,prevPoints,currentLocation)
+            println(source to directionValue(currentDirection))
             when (source to directionValue(currentDirection)) {
                 0 to 2 -> {
-                    availableDirections.rotateRight()
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight().rotateRight()
                     Point(groups[3].maxRow() - stdRowNum, groups[3].minCol())
                 }
 
                 0 to 3 -> {
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight()
                     Point(groups[5].minRow() + stdColNum, groups[5].minCol())
                 }
 
                 1 to 0 -> {
-                    availableDirections.rotateRight()
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight().rotateRight()
                     Point(groups[4].maxRow() - stdRowNum, groups[4].maxCol())
                 }
 
                 1 to 1 -> {
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight()
                     Point(groups[2].minRow() + stdColNum, groups[2].maxCol())
                 }
 
@@ -250,39 +247,37 @@ class Day22 {
                 }
 
                 2 to 0 -> {
-                    newDir = availableDirections.rotateLeft()
+                    newDir = currentDirection.rotateLeft()
                     Point(groups[1].maxRow(), groups[1].minCol() + stdRowNum)
                 }
 
                 2 to 2 -> {
-                    newDir = availableDirections.rotateLeft()
+                    newDir = currentDirection.rotateLeft()
                     Point(groups[3].minRow(), groups[3].minCol() + stdRowNum)
                 }
 
                 3 to 2 -> {
-                    availableDirections.rotateRight()
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight().rotateRight()
                     Point(groups[0].maxRow() - stdRowNum, groups[0].minCol())
                 }
 
                 3 to 3 -> {
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight()
                     Point(groups[2].minRow() + stdColNum, groups[2].minCol())
                 }
 
                 4 to 0 -> {
-                    availableDirections.rotateRight()
-                    newDir = availableDirections.rotateRight()
+                    newDir = currentDirection.rotateRight().rotateRight()
                     Point(groups[1].maxRow() - stdRowNum, groups[1].maxCol())
                 }
 
                 4 to 1 -> {
-                    newDir = availableDirections.rotateLeft()
+                    newDir = currentDirection.rotateLeft()
                     Point(groups[5].minRow() + stdColNum, groups[5].maxCol())
                 }
 
                 5 to 0 -> {
-                    newDir = availableDirections.rotateLeft()
+                    newDir = currentDirection.rotateLeft()
                     Point(groups[4].maxRow(), groups[4].minCol() + stdRowNum)
                 }
 
@@ -292,24 +287,31 @@ class Day22 {
                 }
 
                 5 to 2 -> {
-                    newDir = availableDirections.rotateLeft()
+                    newDir = currentDirection.rotateLeft()
                     Point(groups[0].minRow(), groups[0].minCol() + stdRowNum)
                 }
 
                 else -> TODO((source to directionValue(currentDirection)).toString())
             }
         }
+//        visualize(points, prevPoints + Pair(currentLocation, currentDirection), targetPoint)
         if (!points.containsKey(targetPoint)) {
             visualize(points, prevPoints, targetPoint)
             throw IllegalArgumentException(targetPoint.toString())
         }
         if (points[targetPoint]!!) {
-            prevPoints.put(currentLocation, currentDirection)
-            return Triple(targetPoint, i + 1, newDir)
+//            prevPoints.put(currentLocation, currentDirection)
+            return DCL(targetPoint, i + 1, newDir)
         } else {
-            return Triple(currentLocation, sit, currentDirection)
+            return DCL(currentLocation, sit, currentDirection)
         }
     }
+
+    data class DCL(
+        val currentLocation: Point,
+        val i: Int,
+        val newDir: Point
+    )
 
     fun List<Map.Entry<Point, Boolean>>.minRow() = minOf { it.key.rowNum }
     fun List<Map.Entry<Point, Boolean>>.maxRow() = maxOf { it.key.rowNum }
@@ -339,6 +341,26 @@ class Day22 {
                 } else print(' ')
             }
             println()
+        }
+    }
+
+    fun Point.rotateLeft(): Point {
+        return when (this) {
+            Point(-1, 0) -> Point(0, -1)
+            Point(0, -1) -> Point(1, 0)
+            Point(1, 0) -> Point(0, 1)
+            Point(0, 1) -> Point(-1, 0)
+            else -> TODO()
+        }
+    }
+
+    fun Point.rotateRight(): Point {
+        return when (this) {
+            Point(-1, 0) -> Point(0, 1)
+            Point(0, 1) -> Point(1, 0)
+            Point(1, 0) -> Point(0, -1)
+            Point(0, -1) -> Point(-1, 0)
+            else -> TODO()
         }
     }
 
