@@ -358,16 +358,4 @@ class Day22 {
             else -> TODO()
         }
     }
-
-    fun <T> MutableList<T>.rotateRight(): T {
-        val top = this.removeFirst()
-        this.add(top)
-        return this.first()
-    }
-
-    fun <T> MutableList<T>.rotateLeft(): T {
-        val end = this.removeLast()
-        this.add(0, end)
-        return this.first()
-    }
 }
