@@ -35,7 +35,6 @@ class Day22 {
             else {
                 var i = 0
                 val sit = str.toInt()
-                println("$sit $it")
                 while (i < sit) {
                     val nextPoint = currentLocation + currentDirection
                     if (points.containsKey(nextPoint)) {
@@ -82,8 +81,8 @@ class Day22 {
         }
         val finalLocation = currentLocation + Point(1, 1)
         val finalDirection = directionValue(currentDirection)
-        println(finalLocation)
-        println(finalDirection)
+//        println(finalLocation)
+//        println(finalDirection)
         return finalLocation.rowNum * 1000 + finalLocation.colNum * 4 + finalDirection
     }
 
@@ -217,9 +216,6 @@ class Day22 {
                 else -> TODO()
             }
         } else {
-//            println("$source ${directionValue(currentDirection)} $currentLocation $stdRowNum $stdColNum")
-//            visualize(points,prevPoints,currentLocation)
-            println(source to directionValue(currentDirection))
             when (source to directionValue(currentDirection)) {
                 0 to 2 -> {
                     newDir = currentDirection.rotateRight().rotateRight()
@@ -294,13 +290,12 @@ class Day22 {
                 else -> TODO((source to directionValue(currentDirection)).toString())
             }
         }
-        visualize(points, prevPoints + Pair(currentLocation, currentDirection), targetPoint)
+//        visualize(points, prevPoints + Pair(currentLocation, currentDirection), targetPoint)
         if (!points.containsKey(targetPoint)) {
             visualize(points, prevPoints, targetPoint)
             throw IllegalArgumentException(targetPoint.toString())
         }
         if (points[targetPoint]!!) {
-//            prevPoints.put(currentLocation, currentDirection)
             return DCL(targetPoint, i + 1, newDir)
         } else {
             return DCL(currentLocation, sit, currentDirection)
