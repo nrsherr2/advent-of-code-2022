@@ -272,7 +272,7 @@ class Day22 {
                 }
 
                 4 to 1 -> {
-                    newDir = currentDirection.rotateLeft()
+                    newDir = currentDirection.rotateRight()
                     Point(groups[5].minRow() + stdColNum, groups[5].maxCol())
                 }
 
@@ -294,7 +294,7 @@ class Day22 {
                 else -> TODO((source to directionValue(currentDirection)).toString())
             }
         }
-//        visualize(points, prevPoints + Pair(currentLocation, currentDirection), targetPoint)
+        visualize(points, prevPoints + Pair(currentLocation, currentDirection), targetPoint)
         if (!points.containsKey(targetPoint)) {
             visualize(points, prevPoints, targetPoint)
             throw IllegalArgumentException(targetPoint.toString())
