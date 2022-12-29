@@ -1,3 +1,5 @@
+import kotlin.math.max
+
 class Day19 {
     val part1TestExpected = 33
     val part2TestExpected = -1
@@ -5,7 +7,7 @@ class Day19 {
     fun part1(input: List<String>): Int {
         val blueprintStates = parseInput(input)
         return blueprintStates.mapIndexed { index, gameState ->
-            val noth = runGame(gameState.costs)
+            val noth = bfs(gameState.costs)
             println("FINAL SCORE: $noth")
             noth * (index + 1)
         }.sum()
@@ -15,76 +17,132 @@ class Day19 {
         TODO()
     }
 
-    private fun runGame(costs: Map<Material, RobotDef>): Int {
-        var gameStates = listOf(GameState(mutableMapOf(Material.ORE to 1), mutableMapOf(), costs))
-        println(1)
-        for (i in 1..24) {
-            if (gameStates.any { it.final > 0 }) println("GEO! ${gameStates.maxOf { it.final }}")
-            val nextStates = gameStates.flatMap { gs ->
-                buildList {
-                    val cd = gs.deepCopy().apply {
-                        buildOrder += "WAI$i "
-                        extractResources(this)
-                    }
-                    add(cd)
-                    if (gs.materials.access(Material.ORE) >= gs.costs[Material.GEODE]!!.cost.access(Material.ORE) &&
-                        gs.materials.access(Material.OBSIDIAN) >= gs.costs[Material.GEODE]!!.cost.access(Material.OBSIDIAN)
-                    ) {
+    private fun bfs(costs: Map<Material, RobotDef>): Int {
+        var states = listOf(GameState(mutableMapOf(Material.ORE to 1), mutableMapOf(), costs))
+        var maxRes = 0
+        while (states.isNotEmpty()) {
+            val bd = buildSet {
+                states.forEach { gs ->
+                    if (gs.robots.access(Material.ORE) < 8) run buildOre@{
                         val c = gs.deepCopy()
+                        while (c.materials.access(Material.ORE) < costs.book(Material.ORE, Material.ORE)) {
+                            extractResources(c)
+                            c.day++
+                            if (c.day >= 24) {
+                                maxRes = max(maxRes, c.final)
+                                if (c.final == maxRes) println("${c.final} GEM: ${c.buildOrder}")
+                                return@buildOre
+                            }
+                        }
                         c.materials[Material.ORE] =
-                            c.materials.access(Material.ORE) - c.costs[Material.GEODE]!!.cost.access(Material.ORE)
-                        c.materials[Material.OBSIDIAN] =
-                            c.materials.access(Material.OBSIDIAN) - c.costs[Material.GEODE]!!.cost.access(Material.OBSIDIAN)
+                            c.materials.access(Material.ORE) - costs.book(Material.ORE, Material.ORE)
                         extractResources(c)
-                        c.robots[Material.GEODE] = c.robots.access(Material.GEODE) + 1
-                        c.buildOrder += "GEO$i "
-                        add(c)
-                    }
-                    if (gs.materials.access(Material.ORE) >= gs.costs[Material.OBSIDIAN]!!.cost.access(Material.ORE) &&
-                        gs.materials.access(Material.CLAY) >= gs.costs[Material.OBSIDIAN]!!.cost.access(Material.CLAY)
-                    ) {
-                        val c = gs.deepCopy()
-                        c.materials[Material.ORE] =
-                            c.materials.access(Material.ORE) - c.costs[Material.OBSIDIAN]!!.cost.access(Material.ORE)
-                        c.materials[Material.CLAY] =
-                            c.materials.access(Material.CLAY) - c.costs[Material.OBSIDIAN]!!.cost.access(Material.CLAY)
-                        extractResources(c)
-                        c.robots[Material.OBSIDIAN] = c.robots.access(Material.OBSIDIAN) + 1
-                        c.buildOrder += "OBS$i "
-                        add(c)
-                    }
-                    if (gs.materials.access(Material.ORE) >= gs.costs[Material.CLAY]!!.cost.access(Material.ORE)) {
-                        val c = gs.deepCopy()
-                        c.materials[Material.ORE] =
-                            c.materials.access(Material.ORE) - c.costs[Material.CLAY]!!.cost.access(Material.ORE)
-                        extractResources(c)
-                        c.robots[Material.CLAY] = c.robots.access(Material.CLAY) + 1
-                        c.buildOrder += "CLA$i "
-                        add(c)
-                    }
-                    if (gs.materials.access(Material.ORE) >= gs.costs[Material.ORE]!!.cost.access(Material.ORE)) {
-                        val c = gs.deepCopy()
-                        c.materials[Material.ORE] =
-                            c.materials.access(Material.ORE) - c.costs[Material.ORE]!!.cost.access(Material.ORE)
-                        extractResources(c)
+                        c.day++
                         c.robots[Material.ORE] = c.robots.access(Material.ORE) + 1
-                        c.buildOrder += "ORE$i "
+                        if (c.day >= 24) {
+                            maxRes = max(maxRes, c.final)
+                            if (c.final == maxRes) println("${c.final} GEM: ${c.buildOrder}")
+                            return@buildOre
+                        }
+                        c.buildOrder += "ORE${c.day} "
+                        add(c)
+                    }
+                    if (gs.robots.access(Material.CLAY) < 8) run buildClay@{
+                        val c = gs.deepCopy()
+                        while (c.materials.access(Material.ORE) < costs.book(Material.CLAY, Material.ORE)) {
+                            extractResources(c)
+                            c.day++
+                            if (c.day >= 24) {
+                                maxRes = max(maxRes, c.final)
+                                if (c.final == maxRes) println("${c.final} GEM: ${c.buildOrder}")
+                                return@buildClay
+                            }
+                        }
+                        c.materials[Material.ORE] =
+                            c.materials.access(Material.ORE) - costs.book(Material.CLAY, Material.ORE)
+                        extractResources(c)
+                        c.day++
+                        c.robots[Material.CLAY] = c.robots.access(Material.CLAY) + 1
+                        if (c.day >= 24) {
+                            maxRes = max(maxRes, c.final)
+                            if (c.final == maxRes) println("${c.final} GEM: ${c.buildOrder}")
+                            return@buildClay
+                        }
+                        c.buildOrder += "CLA${c.day} "
+                        add(c)
+                    }
+                    if (gs.robots.access(Material.CLAY) > 0) run buildObs@{
+                        val c = gs.deepCopy()
+                        while (c.materials.access(Material.ORE) < costs.book(
+                                Material.OBSIDIAN,
+                                Material.ORE
+                            ) || c.materials.access(Material.CLAY) < costs.book(Material.OBSIDIAN, Material.CLAY)
+                        ) {
+                            extractResources(c)
+                            c.day++
+                            if (c.day >= 24) {
+                                maxRes = max(maxRes, c.final)
+                                if (c.final == maxRes) println("${c.final} GEM: ${c.buildOrder}")
+                                return@buildObs
+                            }
+                        }
+                        c.materials[Material.ORE] =
+                            c.materials.access(Material.ORE) - costs.book(Material.OBSIDIAN, Material.ORE)
+                        c.materials[Material.CLAY] =
+                            c.materials.access(Material.CLAY) - costs.book(Material.OBSIDIAN, Material.CLAY)
+                        extractResources(c)
+                        c.day++
+                        c.robots[Material.OBSIDIAN] = c.robots.access(Material.OBSIDIAN) + 1
+                        if (c.day >= 24) {
+                            maxRes = max(maxRes, c.final)
+                            if (c.final == maxRes) println("${c.final} GEM: ${c.buildOrder}")
+                            return@buildObs
+                        }
+                        c.buildOrder += "OBS${c.day} "
+                        add(c)
+                    }
+                    if (gs.robots.access(Material.OBSIDIAN) > 0) run buildGeo@{
+                        val c = gs.deepCopy()
+                        while (c.materials.access(Material.ORE) < costs.book(
+                                Material.GEODE,
+                                Material.ORE
+                            ) || c.materials.access(Material.OBSIDIAN) < costs.book(Material.GEODE, Material.OBSIDIAN)
+                        ) {
+                            extractResources(c)
+                            c.day++
+                            if (c.day >= 24) {
+                                maxRes = max(maxRes, c.final)
+                                if (c.final == maxRes) println("${c.final} GEM: ${c.buildOrder}")
+                                return@buildGeo
+                            }
+                        }
+                        c.materials[Material.ORE] =
+                            c.materials.access(Material.ORE) - costs.book(Material.GEODE, Material.ORE)
+                        c.materials[Material.OBSIDIAN] =
+                            c.materials.access(Material.OBSIDIAN) - costs.book(Material.GEODE, Material.OBSIDIAN)
+                        extractResources(c)
+                        c.day++
+                        if (c.day >= 24) {
+                            maxRes = max(maxRes, c.final)
+                            if (c.final == maxRes) println("${c.final} GEM: ${c.buildOrder}")
+                            return@buildGeo
+                        }
+                        c.robots[Material.GEODE] = c.robots.access(Material.GEODE) + 1
+                        c.buildOrder += "GEO${c.day} "
                         add(c)
                     }
                 }
             }
-            val newStates = nextStates.distinct()
-            println("${nextStates.size} ${newStates.size}")
-            gameStates = (newStates.maxOf { it.final } - 2).let { mx -> newStates.filter { it.final > mx } }
-//            if (gameStates.any { it.robots.access(Material.OBSIDIAN) > 0 }) gameStates = gameStates.filter { it.robots.access(Material.OBSIDIAN) > 0 }
-//            if (gameStates.any { it.robots.access(Material.CLAY) > 0 }) gameStates = gameStates.filter { it.robots.access(Material.CLAY) > 0 }
-            gameStates.maxBy { it.final }.let { println(it.buildOrder) }
-//            if(i >= 20)gameStates = gameStates.filter { it.robots.access(Material.OBSIDIAN) == 0 }
+            val dist = bd.distinct()
+            println("${bd.size} ${dist.size}")
+            println(maxRes)
+            states = dist
         }
-        gameStates.maxBy { it.final }.let { println(it.buildOrder) }
-        return gameStates.maxOf { it.final }
+        return maxRes
     }
 
+
+    fun Map<Material, RobotDef>.book(def: Material, mat: Material) = this[def]!!.cost.access(mat)
     private fun dfs(gs: GameState, day: Int = 1, layer: Int = 0): Int {
         if (day >= 24) {
             return gs.final
@@ -137,9 +195,10 @@ class Day19 {
             if (curDay >= 24) return gs.final
             curDay++
             extractResources(gs)
-        } while (
-            gs.materials.getOrDefault(Material.ORE, 0) < cost.cost[Material.ORE]!! &&
-            gs.materials.getOrDefault(Material.CLAY, 0) < cost.cost[Material.CLAY]!!
+        } while (gs.materials.getOrDefault(Material.ORE, 0) < cost.cost[Material.ORE]!! && gs.materials.getOrDefault(
+                Material.CLAY,
+                0
+            ) < cost.cost[Material.CLAY]!!
         )
         gs.materials[Material.ORE] = gs.materials[Material.ORE]!! - cost.cost[Material.ORE]!!
         gs.materials[Material.CLAY] = gs.materials[Material.CLAY]!! - cost.cost[Material.CLAY]!!
@@ -156,9 +215,13 @@ class Day19 {
             if (curDay >= 24) return gs.final
             curDay++
             extractResources(gs)
-        } while (
-            gs.materials.getOrDefault(Material.OBSIDIAN, 0) < cost.cost[Material.OBSIDIAN]!! &&
-            gs.materials.getOrDefault(Material.CLAY, 0) < cost.cost[Material.OBSIDIAN]!!
+        } while (gs.materials.getOrDefault(
+                Material.OBSIDIAN,
+                0
+            ) < cost.cost[Material.OBSIDIAN]!! && gs.materials.getOrDefault(
+                Material.CLAY,
+                0
+            ) < cost.cost[Material.OBSIDIAN]!!
         )
         gs.materials[Material.ORE] = gs.materials[Material.ORE]!! - cost.cost[Material.ORE]!!
         gs.materials[Material.OBSIDIAN] = gs.materials[Material.OBSIDIAN]!! - cost.cost[Material.OBSIDIAN]!!
@@ -218,7 +281,8 @@ class Day19 {
         val robots: MutableMap<Material, Int>,
         val materials: MutableMap<Material, Int>,
         val costs: Map<Material, RobotDef>,
-        var buildOrder: String = ""
+        var buildOrder: String = "",
+        var day: Int = 0
     ) {
         fun deepCopy() = this.copy(robots.toMutableMap(), materials.toMutableMap(), costs.mapValues { it.value.copy() })
         override fun equals(other: Any?): Boolean {
@@ -227,17 +291,18 @@ class Day19 {
 
             other as GameState
 
-            if (robots != other.robots) return false
-            if (materials != other.materials) return false
+            if (buildOrder != other.buildOrder) return false
+            if (day != other.day) return false
 
             return true
         }
 
         override fun hashCode(): Int {
-            var result = robots.hashCode()
-            result = 31 * result + materials.hashCode()
+            var result = buildOrder.hashCode()
+            result = 31 * result + day
             return result
         }
+
 
         val final: Int get() = materials.getOrDefault(Material.GEODE, 0)
 
