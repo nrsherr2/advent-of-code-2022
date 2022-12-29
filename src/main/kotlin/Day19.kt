@@ -5,7 +5,7 @@ class Day19 {
     fun part1(input: List<String>): Int {
         val blueprintStates = parseInput(input)
         return blueprintStates.mapIndexed { index, gameState ->
-            val noth = dfs(gameState)
+            val noth = runGame(gameState.costs)
             println("FINAL SCORE: $noth")
             noth * (index + 1)
         }.sum()
@@ -13,6 +13,76 @@ class Day19 {
 
     fun part2(input: List<String>): Int {
         TODO()
+    }
+
+    private fun runGame(costs: Map<Material, RobotDef>): Int {
+        var gameStates = listOf(GameState(mutableMapOf(Material.ORE to 1), mutableMapOf(), costs))
+        println(1)
+        for (i in 1..24) {
+            if (gameStates.any { it.final > 0 }) println("GEO! ${gameStates.maxOf { it.final }}")
+            val nextStates = gameStates.flatMap { gs ->
+                buildList {
+                    val cd = gs.deepCopy().apply {
+                        buildOrder += "WAI$i "
+                        extractResources(this)
+                    }
+                    add(cd)
+                    if (gs.materials.access(Material.ORE) >= gs.costs[Material.GEODE]!!.cost.access(Material.ORE) &&
+                        gs.materials.access(Material.OBSIDIAN) >= gs.costs[Material.GEODE]!!.cost.access(Material.OBSIDIAN)
+                    ) {
+                        val c = gs.deepCopy()
+                        c.materials[Material.ORE] =
+                            c.materials.access(Material.ORE) - c.costs[Material.GEODE]!!.cost.access(Material.ORE)
+                        c.materials[Material.OBSIDIAN] =
+                            c.materials.access(Material.OBSIDIAN) - c.costs[Material.GEODE]!!.cost.access(Material.OBSIDIAN)
+                        extractResources(c)
+                        c.robots[Material.GEODE] = c.robots.access(Material.GEODE) + 1
+                        c.buildOrder += "GEO$i "
+                        add(c)
+                    }
+                    if (gs.materials.access(Material.ORE) >= gs.costs[Material.OBSIDIAN]!!.cost.access(Material.ORE) &&
+                        gs.materials.access(Material.CLAY) >= gs.costs[Material.OBSIDIAN]!!.cost.access(Material.CLAY)
+                    ) {
+                        val c = gs.deepCopy()
+                        c.materials[Material.ORE] =
+                            c.materials.access(Material.ORE) - c.costs[Material.OBSIDIAN]!!.cost.access(Material.ORE)
+                        c.materials[Material.CLAY] =
+                            c.materials.access(Material.CLAY) - c.costs[Material.OBSIDIAN]!!.cost.access(Material.CLAY)
+                        extractResources(c)
+                        c.robots[Material.OBSIDIAN] = c.robots.access(Material.OBSIDIAN) + 1
+                        c.buildOrder += "OBS$i "
+                        add(c)
+                    }
+                    if (gs.materials.access(Material.ORE) >= gs.costs[Material.CLAY]!!.cost.access(Material.ORE)) {
+                        val c = gs.deepCopy()
+                        c.materials[Material.ORE] =
+                            c.materials.access(Material.ORE) - c.costs[Material.CLAY]!!.cost.access(Material.ORE)
+                        extractResources(c)
+                        c.robots[Material.CLAY] = c.robots.access(Material.CLAY) + 1
+                        c.buildOrder += "CLA$i "
+                        add(c)
+                    }
+                    if (gs.materials.access(Material.ORE) >= gs.costs[Material.ORE]!!.cost.access(Material.ORE)) {
+                        val c = gs.deepCopy()
+                        c.materials[Material.ORE] =
+                            c.materials.access(Material.ORE) - c.costs[Material.ORE]!!.cost.access(Material.ORE)
+                        extractResources(c)
+                        c.robots[Material.ORE] = c.robots.access(Material.ORE) + 1
+                        c.buildOrder += "ORE$i "
+                        add(c)
+                    }
+                }
+            }
+            val newStates = nextStates.distinct()
+            println("${nextStates.size} ${newStates.size}")
+            gameStates = (newStates.maxOf { it.final } - 2).let { mx -> newStates.filter { it.final > mx } }
+//            if (gameStates.any { it.robots.access(Material.OBSIDIAN) > 0 }) gameStates = gameStates.filter { it.robots.access(Material.OBSIDIAN) > 0 }
+//            if (gameStates.any { it.robots.access(Material.CLAY) > 0 }) gameStates = gameStates.filter { it.robots.access(Material.CLAY) > 0 }
+            gameStates.maxBy { it.final }.let { println(it.buildOrder) }
+//            if(i >= 20)gameStates = gameStates.filter { it.robots.access(Material.OBSIDIAN) == 0 }
+        }
+        gameStates.maxBy { it.final }.let { println(it.buildOrder) }
+        return gameStates.maxOf { it.final }
     }
 
     private fun dfs(gs: GameState, day: Int = 1, layer: Int = 0): Int {
@@ -147,12 +217,34 @@ class Day19 {
     data class GameState(
         val robots: MutableMap<Material, Int>,
         val materials: MutableMap<Material, Int>,
-        val costs: Map<Material, RobotDef>
+        val costs: Map<Material, RobotDef>,
+        var buildOrder: String = ""
     ) {
         fun deepCopy() = this.copy(robots.toMutableMap(), materials.toMutableMap(), costs.mapValues { it.value.copy() })
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as GameState
+
+            if (robots != other.robots) return false
+            if (materials != other.materials) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = robots.hashCode()
+            result = 31 * result + materials.hashCode()
+            return result
+        }
 
         val final: Int get() = materials.getOrDefault(Material.GEODE, 0)
+
+
     }
+
+    private fun Map<Material, Int>.access(material: Material) = this.getOrDefault(material, 0)
 
     enum class Material { ORE, CLAY, OBSIDIAN, GEODE }
     data class RobotDef(val cost: Map<Material, Int>)
