@@ -50,20 +50,17 @@ class Day17 {
         val rockQueue = mutableListOf(minus, plus, revL, tetGod, blok)
         val board: MutableList<PointL> = floor.toMutableList()
         val situations = mutableListOf<Situation>()
-        var numRocks = 0
         fun height() = board.maxOf { it.rowNum }
         var offsetHeight = 0L
         var heights = mutableListOf<Long>()
         var directionIdx = -1
         var patternStart: Pattern? = null
-        //1_000_000_000_000
-        //https://github.com/ivzb/advent_of_code/blob/master/src/main/kotlin/advent_of_code/_2022/Task17.kt
+        var otherCondition = true
         var i = 0L
         while (i < num) {
             i++
             val block = rockQueue.rotate().map { it.copy() }
             var bk = block.map { pt -> pt + PointL(board.maxOf { it.rowNum } + 4, 2) }
-            numRocks++
             var condition = true
             val sit = Situation(directionIdx, block)
             if (situations.contains(sit)) {
@@ -72,22 +69,17 @@ class Day17 {
                     patternStart = pattern
                     situations.clear()
                     heights.clear()
-                } else {
+                } else if (otherCondition) {
                     val patternEnd = pattern
                     val heightPerCycle = patternEnd.chamberHeight - patternStart.chamberHeight
                     val rocksPerCycle = patternEnd.fallenRocks - patternStart.fallenRocks
 
-                    val totalRocks = num
-                    val cyclesNeeded = totalRocks / rocksPerCycle
-
-                    val remainingRocks = (num - (rocksPerCycle * cyclesNeeded)).toInt()
-                    println(heightPerCycle * cyclesNeeded)
-                    println(remainingRocks)
-                    println(heights)
-                    val remainingHeight = heights[remainingRocks - 5]
-                    println(remainingHeight)
-
-                    return (heightPerCycle * cyclesNeeded) + remainingHeight
+                    val rocksLeftToPut = num - i
+                    val numPatternsLeft = rocksLeftToPut / rocksPerCycle
+                    val rocksLeftOver = rocksLeftToPut % rocksPerCycle
+                    i = num - rocksLeftOver
+                    offsetHeight = numPatternsLeft * heightPerCycle
+                    otherCondition = false
                 }
             }
             situations.add(sit)
@@ -119,7 +111,6 @@ class Day17 {
                 }
             }
             board.addAll(bk)
-            println("numRocks: $i")
         }
         return height() + offsetHeight
     }
