@@ -53,9 +53,11 @@ class Day17 {
         var numRocks = 0
         fun height() = board.maxOf { it.rowNum }
         var offsetHeight = 0L
+        var heights = mutableListOf<Long>()
         var directionIdx = -1
+        var patternStart: Pattern? = null
         //1_000_000_000_000
-        //https://github.com/ivzb/advent_of_code/blob/master/src/main/kotlin/_2022/Task17.kt
+        //https://github.com/ivzb/advent_of_code/blob/master/src/main/kotlin/advent_of_code/_2022/Task17.kt
         var i = 0L
         while (i < num) {
             i++
@@ -63,60 +65,33 @@ class Day17 {
             var bk = block.map { pt -> pt + PointL(board.maxOf { it.rowNum } + 4, 2) }
             numRocks++
             var condition = true
-            val sit = Situation(directionIdx, block, numRocks, height(), board.map { it.copy() })
-            situations.add(sit)
-            if (situations.size > 3 && offsetHeight == 0L) {
-                var back = 1
-                while (situations.size - (back * 5) > 0) {
-                    val slice1 = situations.takeLast(back)
-                    val slice2 = (situations - slice1).takeLast(back)
-                    val slice3 = (situations - (slice1 + slice2)).takeLast(back)
-                    val slice4 = (situations - (slice1 + slice2 + slice3)).takeLast(back)
-                    val slice5 = (situations - (slice1 + slice2 + slice3 + slice4)).takeLast(back)
-                    if (slice1.first().directionIdx == slice2.first().directionIdx &&
-                        slice1.first().block == slice2.first().block &&
-                        slice2.first().directionIdx == slice3.first().directionIdx &&
-                        slice2.first().block == slice3.first().block &&
-                        slice3.first().directionIdx == slice4.first().directionIdx &&
-                        slice3.first().block == slice4.first().block &&
-                        slice4.first().directionIdx == slice5.first().directionIdx &&
-                        slice4.first().block == slice5.first().block &&
-                        slice5.first().height > 1
-                    ) {
-                        val highestBoard = slice2.first().board - slice3.first().board
-                        val midBoard = slice3.first().board - slice4.first().board
-                        val lowestBoard = slice4.first().board - slice5.first().board
-                        val stdHighest = highestBoard.minOf { it.rowNum }
-                            .let { min -> highestBoard.map { PointL(it.rowNum - min, it.colNum) } }
-                        val stdMid = midBoard.minOf { it.rowNum }
-                            .let { min -> midBoard.map { PointL(it.rowNum - min, it.colNum) } }
-                        val stdLowest = lowestBoard.minOf { it.rowNum }
-                            .let { min -> lowestBoard.map { PointL(it.rowNum - min, it.colNum) } }
-                        if (stdHighest == stdLowest && stdLowest == stdMid) {
-                            visualize(highestBoard)
-                            visualize(midBoard)
-                            visualize(lowestBoard)
-                            val patternSize = back
-                            val patternHeight = stdHighest.maxOf { it.rowNum }
-                            println("patternSize: $patternSize\tpatternHeight: $patternHeight")
-                            println()
-                            var j = num
-                            while (j > 10) {
-                                println("j: $j")
-                                while (i + (patternSize * j) < num) {
-                                    i += patternSize * j
-                                    offsetHeight += patternHeight * j
-                                }
-                                println("we're up to $i now!")
-                                println("height: $offsetHeight")
-                                j /= 2
-                            }
-                            println()
-                        }
-                    }
-                    back++
+            val sit = Situation(directionIdx, block)
+            if (situations.contains(sit)) {
+                val pattern = Pattern(chamberHeight = height(), fallenRocks = i)
+                if (patternStart == null) {
+                    patternStart = pattern
+                    situations.clear()
+                    heights.clear()
+                } else {
+                    val patternEnd = pattern
+                    val heightPerCycle = patternEnd.chamberHeight - patternStart.chamberHeight
+                    val rocksPerCycle = patternEnd.fallenRocks - patternStart.fallenRocks
+
+                    val totalRocks = num
+                    val cyclesNeeded = totalRocks / rocksPerCycle
+
+                    val remainingRocks = (num - (rocksPerCycle * cyclesNeeded)).toInt()
+                    println(heightPerCycle * cyclesNeeded)
+                    println(remainingRocks)
+                    println(heights)
+                    val remainingHeight = heights[remainingRocks - 5]
+                    println(remainingHeight)
+
+                    return (heightPerCycle * cyclesNeeded) + remainingHeight
                 }
             }
+            situations.add(sit)
+            if (patternStart != null) heights.add(height() - patternStart.chamberHeight)
             while (condition) {
                 directionIdx = (directionIdx + 1) % directions.size
                 val dir = directions[directionIdx]
@@ -175,10 +150,8 @@ class Day17 {
 
     data class Situation(
         val directionIdx: Int,
-        val block: List<PointL>,
-        val numRocksDown: Int,
-        val height: Long,
-        val board: List<PointL>
+        val block: List<PointL>
     )
 
+    data class Pattern(val chamberHeight: Long, val fallenRocks: Long)
 }
