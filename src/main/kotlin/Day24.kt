@@ -32,7 +32,7 @@ class Day24 {
             val rn = walls.maxOf { it.location.rowNum }
             (0..1_000).map { Point(rn, it) }.first { Wall(it) !in walls }
         }
-        val steps = calculateSteps(initialState, 4)
+        val steps = calculateSteps(initialState, 3)
         var i = 0
         while (locations.none { it == destPoint }) {
             i++
