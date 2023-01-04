@@ -1,43 +1,48 @@
+import kotlin.random.Random
+
 class Day17 {
     val part1TestExpected = 3068
     val part2TestExpected = 1514285714288
     fun part1(input: List<String>): Int {
-        val directions = input.first().map { it }.toMutableList()
-        val rockQueue = mutableListOf(minus, plus, revL, tetGod, blok)
-        val order = (1..2022).map { rockQueue.rotate().map { it.copy() } }
-        val board: MutableList<PointL> = floor.toMutableList()
-        order.forEach { block ->
-            var bk = block.map { pt -> pt + PointL(board.maxOf { it.rowNum } + 4, 2) }
-            var condition = true
-            while (condition) {
-                when (directions.rotate()) {
-                    '>' -> {
-                        val potential = bk.map { it + shrDelta }
-                        if (potential.none { it.colNum == 7L || board.contains(it) }) {
-                            bk = potential
+        if (Random.nextBoolean()) {
+            println("Solving part 1 by manually dropping 2022 blocks")
+            val directions = input.first().map { it }.toMutableList()
+            val rockQueue = mutableListOf(minus, plus, revL, tetGod, blok)
+            val order = (1..2022).map { rockQueue.rotate().map { it.copy() } }
+            val board: MutableList<PointL> = floor.toMutableList()
+            order.forEach { block ->
+                var bk = block.map { pt -> pt + PointL(board.maxOf { it.rowNum } + 4, 2) }
+                var condition = true
+                while (condition) {
+                    when (directions.rotate()) {
+                        '>' -> {
+                            val potential = bk.map { it + shrDelta }
+                            if (potential.none { it.colNum == 7L || board.contains(it) }) {
+                                bk = potential
+                            }
                         }
-                    }
 
-                    '<' -> {
-                        val potential = bk.map { it + shlDelta }
-                        if (potential.none { it.colNum == -1L || board.contains(it) }) {
-                            bk = potential
+                        '<' -> {
+                            val potential = bk.map { it + shlDelta }
+                            if (potential.none { it.colNum == -1L || board.contains(it) }) {
+                                bk = potential
+                            }
                         }
                     }
+                    val potential = bk.map { it + dropDelta }
+                    if (potential.any { board.contains(it) }) {
+                        condition = false
+                    } else {
+                        bk = potential
+                    }
                 }
-                val potential = bk.map { it + dropDelta }
-                if (potential.any { board.contains(it) }) {
-                    condition = false
-                } else {
-                    bk = potential
-                }
+                board.addAll(bk)
             }
-            board.addAll(bk)
+            return board.maxOf { it.rowNum }.toInt()
+        } else {
+            println("Solving part 1 with part 2 solution")
+            return solve(input, 2022).toInt()
         }
-//        visualize(board)
-        val small = solve(input, 2022)
-        assertEquals(board.maxOf { it.rowNum }, small)
-        return board.maxOf { it.rowNum }.toInt()
     }
 
     fun part2(input: List<String>): Long {
@@ -52,7 +57,6 @@ class Day17 {
         val situations = mutableListOf<Situation>()
         fun height() = board.maxOf { it.rowNum }
         var offsetHeight = 0L
-        var heights = mutableListOf<Long>()
         var directionIdx = -1
         var patternStart: Pattern? = null
         var otherCondition = true
@@ -68,7 +72,6 @@ class Day17 {
                 if (patternStart == null) {
                     patternStart = pattern
                     situations.clear()
-                    heights.clear()
                 } else if (otherCondition) {
                     val patternEnd = pattern
                     val heightPerCycle = patternEnd.chamberHeight - patternStart.chamberHeight
@@ -83,7 +86,6 @@ class Day17 {
                 }
             }
             situations.add(sit)
-            if (patternStart != null) heights.add(height() - patternStart.chamberHeight)
             while (condition) {
                 directionIdx = (directionIdx + 1) % directions.size
                 val dir = directions[directionIdx]
